@@ -1,13 +1,8 @@
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 /**
  * Write a description of class GamePanel here.
  *
@@ -17,19 +12,26 @@ import java.util.ArrayList;
 public class GamePanel extends JPanel implements Runnable {
 
     public static final int FPS = 30;
-    public boolean running;
     public static final int WIDTH = 500;
     public static final int HEIGHT = 600;
+    public static long frameCount;
+    public boolean running;
     private BufferedImage image;
     private Graphics2D g;
     private double averageFPS;
     private Thread thread;
+    private int populationSize;
+    private Rocket[] rockets;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setFocusable(true);
         requestFocus();
         BufferedImage img = null;
+        frameCount = 0;
+        populationSize = 100;
+        rockets = new Rocket[populationSize];
+
 
     }
 
@@ -57,6 +59,10 @@ public class GamePanel extends JPanel implements Runnable {
 
         long targetTime = 1000 / FPS;
 
+        for (int i = 0; i < rockets.length; i++) {
+            rockets[i] = new Rocket();
+        }
+
         while (running) {
 
             startTime = System.nanoTime();
@@ -65,6 +71,7 @@ public class GamePanel extends JPanel implements Runnable {
             gameUpdate();
             gameRender();
             gameDraw();
+            frameCount++;
 
             URDTimeMillis = (System.nanoTime() - startTime) / 1000000;
             waitTime = targetTime - URDTimeMillis;
@@ -88,7 +95,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     }
 
-    public void gameRender(){
+    public void gameRender() {
 
 
         //draw the FPS onto the screen
@@ -96,8 +103,7 @@ public class GamePanel extends JPanel implements Runnable {
         g.drawString("FPS: " + averageFPS, 10, 10);
     }
 
-    public void gameDraw()
-    {
+    public void gameDraw() {
         Graphics g2 = this.getGraphics();
         g2.drawImage(image, 0, 0, null);
         g2.dispose();
@@ -106,7 +112,6 @@ public class GamePanel extends JPanel implements Runnable {
     public void keyTyped(KeyEvent key) {
 
     }
-
 
 
     public void keyReleased(KeyEvent key) {
