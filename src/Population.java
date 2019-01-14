@@ -9,7 +9,7 @@ public class Population {
     ArrayList<Rocket> matingpool;
 
     public Population() {
-        popsize = 5000;
+        popsize = 10000;
         rockets = new Rocket[popsize];
         matingpool = new ArrayList<Rocket>();
 

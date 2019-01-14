@@ -41,7 +41,7 @@ public class Rocket implements Comparable<Rocket> {
 
     public void update() {
         double d = distanceToTarget();
-        if (d < 10) {
+        if (d < GamePanel.t.getSize()) {
             hitTarget = true;
             pos = GamePanel.t.getPos().copy();
         }

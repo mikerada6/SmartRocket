@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 /**
  * Write a description of class GamePanel here.
@@ -37,12 +39,23 @@ public class GamePanel extends JPanel implements Runnable {
         p = new Population();
         generation=0;
         age=0;
-        barriers= new Barrier[1];
+        barriers= new Barrier[2];
         //barriers[0] = new Barrier((WIDTH - WIDTH/2) / 2,(HEIGHT - 50) / 2, WIDTH/2,50);
         //barriers[1] = new Barrier((WIDTH - 50) / 2,150, WIDTH/2,25);
 
         barriers[0] = new Barrier(0 ,2 * HEIGHT/3, 3*WIDTH/4,25);
+        barriers[1] = new Barrier(WIDTH-3*WIDTH/4 ,1 * HEIGHT/3, 3*WIDTH/4,25);
+        try {
+            String str = "generation \ttotalFrameCount\t hit\n";
+            BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt"));
+            writer.write(str);
 
+            writer.close();
+        }catch (Exception e)
+        {
+            System.out.println("Error: " + e);
+            int error=0/0;
+        }
 
     }
 
@@ -103,6 +116,18 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void gameUpdate() {
         p.update();
+        String str = generation +"\t" + totalFrameCount%DNA.lifespan +"\t" + hit+"\n";
+        try{
+            BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt", true));
+            writer.append(' ');
+            writer.append(str);
+
+            writer.close();
+        }catch(Exception e)
+        {
+            System.out.println("Error: " + e);
+            int error=0/0;
+        }
         p.checkBarriers(barriers);
         age++;
         if (age >= DNA.lifespan) {
