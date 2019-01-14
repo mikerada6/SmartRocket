@@ -11,10 +11,13 @@ public class DNA {
         for (int i = 0; i < genes.length; i++) {
             Vector temp = new Vector(rand.nextInt(), rand.nextInt());
             genes[i] = temp.setMag(Rocket.maxvVelocity);
-            System.out.println(genes[i].getTab());
         }
     }
 
+    public Vector getGene(int i)
+    {
+        return genes[i];
+    }
     public DNA(Vector[] genes) {
         this.genes = genes;
     }

@@ -11,10 +11,10 @@ import java.awt.image.BufferedImage;
  */
 public class GamePanel extends JPanel implements Runnable {
 
-    public static final int FPS = 30;
-    public static final int WIDTH = 500;
-    public static final int HEIGHT = 600;
-    public static long frameCount;
+    public static final int FPS = 5;
+    public static final int WIDTH = 1024;
+    public static final int HEIGHT = 768;
+    public static int totalFrameCount;
     public boolean running;
     private BufferedImage image;
     private Graphics2D g;
@@ -28,7 +28,7 @@ public class GamePanel extends JPanel implements Runnable {
         setFocusable(true);
         requestFocus();
         BufferedImage img = null;
-        frameCount = 0;
+        totalFrameCount = 0;
         populationSize = 100;
         rockets = new Rocket[populationSize];
 
@@ -71,7 +71,7 @@ public class GamePanel extends JPanel implements Runnable {
             gameUpdate();
             gameRender();
             gameDraw();
-            frameCount++;
+            totalFrameCount++;
 
             URDTimeMillis = (System.nanoTime() - startTime) / 1000000;
             waitTime = targetTime - URDTimeMillis;
@@ -92,21 +92,30 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void gameUpdate() {
-
+        for (int i = 0; i < rockets.length; i++) {
+            System.out.print(i + "\t" + totalFrameCount + "\t" + rockets[i].getXPos() + "\t" + rockets[i].getYPos());
+            rockets[i].update();
+            System.out.println("\t" + rockets[i].getXPos() + "\t" + rockets[i].getYPos());
+        }
     }
 
     public void gameRender() {
-
-
         //draw the FPS onto the screen
         g.setColor(Color.WHITE);
         g.drawString("FPS: " + averageFPS, 10, 10);
+        for (Rocket r : rockets) {
+            r.draw(g);
+        }
     }
 
     public void gameDraw() {
         Graphics g2 = this.getGraphics();
+
         g2.drawImage(image, 0, 0, null);
         g2.dispose();
+        for (Rocket r : rockets) {
+            r.draw(g);
+        }
     }
 
     public void keyTyped(KeyEvent key) {

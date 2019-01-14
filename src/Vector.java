@@ -60,6 +60,22 @@ public class Vector {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 
+    public Vector limit(double limit)
+    {
+        if(this.getMag()<=limit)
+            return this;
+        else
+        {
+            return this.setMag(limit);
+        }
+    }
+
+    public double getAngleRadians()
+    {
+        return Math.tan(this.y/this.x);
+    }
+
+
     public Vector normalize() {
         double mag = this.getMag();
         if (mag !=0)
