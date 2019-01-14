@@ -2,7 +2,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 
 
-public class Rocket {
+public class Rocket implements Comparable<Rocket> {
 
     public static final double maxvVelocity = 4;
     private Vector pos;
@@ -13,6 +13,8 @@ public class Rocket {
     private int rocketWidth = 5;
     private boolean hitTarget;
     private boolean crashed;
+    private double matingEligibility;
+
 
     public Rocket() {
         dna = new DNA();
@@ -21,6 +23,17 @@ public class Rocket {
         acc = new Vector(0, 0);
         hitTarget = false;
         crashed = false;
+        matingEligibility = 0;
+    }
+
+    public Rocket(DNA dna) {
+        this.dna=dna;
+        pos = new Vector(GamePanel.WIDTH / 2, GamePanel.HEIGHT - rocketHeight);
+        vel = new Vector(0, 0);
+        acc = new Vector(0, 0);
+        hitTarget = false;
+        crashed = false;
+        matingEligibility = 0;
     }
 
     public void update() {
@@ -29,6 +42,9 @@ public class Rocket {
             hitTarget = true;
             pos = GamePanel.t.getPos().copy();
         }
+
+
+
         applyForce(dna.getGene(GamePanel.totalFrameCount));
         if (!hitTarget && !crashed) {
             vel = vel.add(acc);
@@ -79,6 +95,29 @@ public class Rocket {
 
     public double getYPos() {
         return this.pos.getY();
+    }
+
+    public double getMatingEligibility() {
+        return matingEligibility;
+    }
+
+    public void setMatingEligibility(double matingEligibility) {
+        this.matingEligibility = matingEligibility;
+    }
+
+    public DNA getDna() {
+        return dna;
+    }
+
+
+    @Override
+    public int compareTo(Rocket o) {
+        if (this.calcFitness() < o.calcFitness()) {
+            return -1;
+        } else if (this.calcFitness() > o.calcFitness()) {
+            return 1;
+        } else
+            return 0;
     }
 
 

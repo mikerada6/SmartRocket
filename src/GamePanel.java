@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
  */
 public class GamePanel extends JPanel implements Runnable {
 
-    public static final int FPS = 30;
+    public static final int FPS = 45;
     public static final int WIDTH = 1024;
     public static final int HEIGHT = 768;
     public static int totalFrameCount;
@@ -20,9 +20,15 @@ public class GamePanel extends JPanel implements Runnable {
     private Graphics2D g;
     private double averageFPS;
     private Thread thread;
-    private int populationSize;
-    private Rocket[] rockets;
+    private Population p;
     public static final Target t= new Target();
+    public static int age;
+    public static int generation;
+    public static double stat;
+    public static double barrierx;
+    public static double barriery;
+    public static double barrierw;
+    public static double barrierh;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -30,10 +36,13 @@ public class GamePanel extends JPanel implements Runnable {
         requestFocus();
         BufferedImage img = null;
         totalFrameCount = 0;
-        populationSize = 100;
-        rockets = new Rocket[populationSize];
-
-
+        p = new Population();
+        generation=0;
+        age=0;
+        barrierw = WIDTH / 2;
+        barrierh = 10;
+        barrierx = (WIDTH - barrierw) / 2;
+        barriery = (HEIGHT - barrierh) / 2;
 
     }
 
@@ -61,9 +70,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         long targetTime = 1000 / FPS;
 
-        for (int i = 0; i < rockets.length; i++) {
-            rockets[i] = new Rocket();
-        }
+
 
         while (running) {
 
@@ -94,19 +101,36 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void gameUpdate() {
-        for (int i = 0; i < rockets.length; i++) {
-            rockets[i].update();
+        p.update();
+        age++;
+        if (age >= DNA.lifespan) {
+            stat = p.evaluate();
+            p.selection();
+            age = 0;
+            generation++;
         }
     }
 
     public void gameRender() {
         //draw the FPS onto the screen
+        g.setColor(Color.RED);
+        g.fillRect((int)(barrierx), (int)(barriery), (int)barrierw, (int)barrierh);
         g.setColor(Color.WHITE);
-        g.drawString("FPS: " + averageFPS, 10, 10);
-        for (Rocket r : rockets) {
-            r.draw(g);
-        }
+        p.draw(g);
         t.draw(g);
+        g.setColor(Color.WHITE);
+        g.drawString("Generation: " + generation, 20, 20);
+        g.drawString("Age: " + age, 20, 40);
+        if (stat != 0) {
+            g.drawString("Stat: " + stat, 20, 60);
+            g.drawString("FPS: " + averageFPS, 20, 80);
+        }
+        else
+        {
+            g.drawString("FPS: " + averageFPS, 20, 60);
+        }
+
+
     }
 
     public void gameDraw() {

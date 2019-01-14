@@ -10,8 +10,8 @@ public class Target {
     }
 
     public Graphics draw(Graphics g) {
-        g.setColor(Color.RED);
-        g.fillOval((int)this.pos.getX(),(int)this.pos.getY(),50,50);
+        g.setColor(Color.GREEN);
+        g.fillOval((int)this.pos.getX(),(int)this.pos.getY(),10,10);
         return g;
     }
 
