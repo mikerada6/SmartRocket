@@ -14,6 +14,7 @@ public class Rocket implements Comparable<Rocket> {
     private boolean hitTarget;
     private boolean crashed;
     private double matingEligibility;
+    private int stopTime;
 
 
     public Rocket() {
@@ -24,16 +25,18 @@ public class Rocket implements Comparable<Rocket> {
         hitTarget = false;
         crashed = false;
         matingEligibility = 0;
+        stopTime = -1;
     }
 
     public Rocket(DNA dna) {
-        this.dna=dna;
+        this.dna = dna;
         pos = new Vector(GamePanel.WIDTH / 2, GamePanel.HEIGHT - rocketHeight);
         vel = new Vector(0, 0);
         acc = new Vector(0, 0);
         hitTarget = false;
         crashed = false;
         matingEligibility = 0;
+        stopTime = -1;
     }
 
     public void update() {
@@ -44,13 +47,22 @@ public class Rocket implements Comparable<Rocket> {
         }
 
 
-
+        if (pos.getX() > GamePanel.WIDTH || pos.getX() < 0 || pos.getY() > GamePanel.HEIGHT || pos.getY() < 0) {
+            crashed = true;
+        }
         applyForce(dna.getGene(GamePanel.totalFrameCount));
         if (!hitTarget && !crashed) {
             vel = vel.add(acc);
             pos = pos.add(vel);
             acc = acc.multiply(0);
             //vel = vel.limit(maxvVelocity);
+
+        }
+        if (hitTarget) {
+            GamePanel.hit++;
+            if (stopTime == -1) {
+                stopTime = GamePanel.age;
+            }
         }
     }
 
@@ -71,7 +83,11 @@ public class Rocket implements Comparable<Rocket> {
         } else if (crashed) {
             fitness /= 10;
         }
+        if (stopTime != -1) {
+            fitness = fitness + GamePanel.map(stopTime, 0, DNA.lifespan, 20000, 0);
+        }
         return fitness;
+
     }
 
     public Graphics draw(Graphics g) {
@@ -108,6 +124,22 @@ public class Rocket implements Comparable<Rocket> {
     public DNA getDna() {
         return dna;
     }
+
+    public boolean checkBarriers(Barrier[] barriers) {
+
+        for(Barrier b: barriers) {
+            Rectangle me = new Rectangle((int)this.pos.getX() ,(int) this.pos.getY(), this.rocketWidth, this.rocketHeight);
+            Rectangle wall = new Rectangle(b.getLeft() ,b.getTop(), b.getWidth(), b.getHeight());
+            if(me.intersects(wall)) {
+                crashed=true;
+              return true;
+            }
+
+        }
+        return false;
+    }
+
+
 
 
     @Override

@@ -9,7 +9,7 @@ public class Population {
     ArrayList<Rocket> matingpool;
 
     public Population() {
-        popsize = 100;
+        popsize = 5000;
         rockets = new Rocket[popsize];
         matingpool = new ArrayList<Rocket>();
 
@@ -65,6 +65,13 @@ public class Population {
     private Rocket random(ArrayList<Rocket> list) {
         int r = (int) (Math.random() * (list.size()));
         return list.get(r);
+    }
+
+    public void checkBarriers(Barrier[] b)
+    {
+        for (Rocket r : rockets) {
+            r.checkBarriers(b);
+        }
     }
 
     public void update() {

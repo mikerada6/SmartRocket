@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class DNA {
 
-    public static int lifespan = 100;
+    public static int lifespan = 200;
     Random random;
     private Vector[] genes;
     private int R;

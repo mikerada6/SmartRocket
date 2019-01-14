@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
  */
 public class GamePanel extends JPanel implements Runnable {
 
-    public static final int FPS = 45;
+    public static final int FPS = 60;
     public static final int WIDTH = 1024;
     public static final int HEIGHT = 768;
     public static int totalFrameCount;
@@ -25,10 +25,8 @@ public class GamePanel extends JPanel implements Runnable {
     public static int age;
     public static int generation;
     public static double stat;
-    public static double barrierx;
-    public static double barriery;
-    public static double barrierw;
-    public static double barrierh;
+    public static double hit;
+    public static Barrier[] barriers;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -39,10 +37,12 @@ public class GamePanel extends JPanel implements Runnable {
         p = new Population();
         generation=0;
         age=0;
-        barrierw = WIDTH / 2;
-        barrierh = 10;
-        barrierx = (WIDTH - barrierw) / 2;
-        barriery = (HEIGHT - barrierh) / 2;
+        barriers= new Barrier[1];
+        //barriers[0] = new Barrier((WIDTH - WIDTH/2) / 2,(HEIGHT - 50) / 2, WIDTH/2,50);
+        //barriers[1] = new Barrier((WIDTH - 50) / 2,150, WIDTH/2,25);
+
+        barriers[0] = new Barrier(0 ,2 * HEIGHT/3, 3*WIDTH/4,25);
+
 
     }
 
@@ -73,6 +73,7 @@ public class GamePanel extends JPanel implements Runnable {
 
 
         while (running) {
+            hit=0;
 
             startTime = System.nanoTime();
             image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -102,6 +103,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void gameUpdate() {
         p.update();
+        p.checkBarriers(barriers);
         age++;
         if (age >= DNA.lifespan) {
             stat = p.evaluate();
@@ -114,7 +116,10 @@ public class GamePanel extends JPanel implements Runnable {
     public void gameRender() {
         //draw the FPS onto the screen
         g.setColor(Color.RED);
-        g.fillRect((int)(barrierx), (int)(barriery), (int)barrierw, (int)barrierh);
+        for(Barrier b: barriers)
+        {
+            b.draw(g);
+        }
         g.setColor(Color.WHITE);
         p.draw(g);
         t.draw(g);
@@ -124,10 +129,12 @@ public class GamePanel extends JPanel implements Runnable {
         if (stat != 0) {
             g.drawString("Stat: " + stat, 20, 60);
             g.drawString("FPS: " + averageFPS, 20, 80);
+            g.drawString("Hit: " + hit, 20, 100);
         }
         else
         {
             g.drawString("FPS: " + averageFPS, 20, 60);
+            g.drawString("Hit: " + hit, 20, 80);
         }
 
 
