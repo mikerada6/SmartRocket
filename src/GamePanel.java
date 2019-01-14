@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
  */
 public class GamePanel extends JPanel implements Runnable {
 
-    public static final int FPS = 5;
+    public static final int FPS = 30;
     public static final int WIDTH = 1024;
     public static final int HEIGHT = 768;
     public static int totalFrameCount;
@@ -22,6 +22,7 @@ public class GamePanel extends JPanel implements Runnable {
     private Thread thread;
     private int populationSize;
     private Rocket[] rockets;
+    public static final Target t= new Target();
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -31,6 +32,7 @@ public class GamePanel extends JPanel implements Runnable {
         totalFrameCount = 0;
         populationSize = 100;
         rockets = new Rocket[populationSize];
+
 
 
     }
@@ -93,9 +95,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void gameUpdate() {
         for (int i = 0; i < rockets.length; i++) {
-            System.out.print(i + "\t" + totalFrameCount + "\t" + rockets[i].getXPos() + "\t" + rockets[i].getYPos());
             rockets[i].update();
-            System.out.println("\t" + rockets[i].getXPos() + "\t" + rockets[i].getYPos());
         }
     }
 
@@ -106,16 +106,14 @@ public class GamePanel extends JPanel implements Runnable {
         for (Rocket r : rockets) {
             r.draw(g);
         }
+        t.draw(g);
     }
 
     public void gameDraw() {
         Graphics g2 = this.getGraphics();
-
         g2.drawImage(image, 0, 0, null);
         g2.dispose();
-        for (Rocket r : rockets) {
-            r.draw(g);
-        }
+
     }
 
     public void keyTyped(KeyEvent key) {
@@ -124,6 +122,13 @@ public class GamePanel extends JPanel implements Runnable {
 
 
     public void keyReleased(KeyEvent key) {
+    }
+
+    public static double map(double num, double minInput, double maxInput, double minOutput, double maxOutput)
+    {
+        double slope = (maxOutput-minOutput)/(maxInput-minOutput);
+        double b = maxOutput-minOutput*slope;
+        return slope * num + b;
     }
 
 }

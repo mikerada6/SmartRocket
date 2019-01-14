@@ -99,6 +99,17 @@ public class Vector {
         return x + "\t" + y + "\t" + y ;
     }
 
+    public double dist(Vector other)
+    {
+        return Math.sqrt((this.getX()-other.getX())*(this.getX()-other.getX())+(this.getY()-other.getY())*(this.getY()-other.getY()));
+    }
+
+    public Vector copy()
+    {
+        return new Vector(this.x, this.y, this.z, this.is2D);
+    }
+
+
 
 
 }
