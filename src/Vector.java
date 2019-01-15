@@ -63,7 +63,7 @@ public class Vector {
     public Vector limit(double limit)
     {
         if(this.getMag()<=limit)
-            return this;
+            return this.setMag(this.getMag());
         else
         {
             return this.setMag(limit);

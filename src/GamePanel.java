@@ -39,12 +39,13 @@ public class GamePanel extends JPanel implements Runnable {
         p = new Population();
         generation=0;
         age=0;
-        barriers= new Barrier[2];
+        barriers = new Barrier[3];
         //barriers[0] = new Barrier((WIDTH - WIDTH/2) / 2,(HEIGHT - 50) / 2, WIDTH/2,50);
         //barriers[1] = new Barrier((WIDTH - 50) / 2,150, WIDTH/2,25);
 
-        barriers[0] = new Barrier(0 ,2 * HEIGHT/3, 3*WIDTH/4,25);
+        barriers[0] = new Barrier(0, 2 * HEIGHT / 3, 7 * WIDTH / 8, 25);
         barriers[1] = new Barrier(WIDTH-3*WIDTH/4 ,1 * HEIGHT/3, 3*WIDTH/4,25);
+        barriers[2] = new Barrier(0, 1 * HEIGHT / 8, 1 * WIDTH / 4, 25);
         try {
             String str = "generation \ttotalFrameCount\t hit\n";
             BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt"));
