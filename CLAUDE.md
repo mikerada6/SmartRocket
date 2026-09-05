@@ -27,6 +27,8 @@ checked-in wrapper, Swing for rendering, JUnit 5 for tests.
   `@Tag("slow")` and runs only in the slow lane.
 - Simulation logic must stay runnable without a window. Anything that reaches
   for Swing belongs in the rendering classes only.
+- Editor logic lives in `CourseEditorModel` (no Swing, fully unit-tested);
+  `CourseEditorPanel` only maps events to it. Keep new editing behaviour in the model.
 - The compiler runs with `-Xlint:all`. Do not add warnings.
 - Conventional Commits and GitFlow as in the global standards. PRs target `develop`.
 - `generations.csv` (and the old `log.txt`) are runtime output, ignored and never committed.

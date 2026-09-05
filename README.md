@@ -44,6 +44,7 @@ original course with a fixed seed and no window:
 | `--course-file PATH` | load a course from a file; its size line sets the world size | none |
 | `--seed N` | random seed for a reproducible run | random |
 | `--headless N` | run N generations without a window, then exit | off |
+| `--edit` | open the course editor instead of running | off |
 | `--log PATH` | CSV file for per-generation statistics | `generations.csv` | Each run writes
 one CSV line per generation to `generations.csv` in the working directory
 (average and best fitness, rockets that hit the target, rockets that crashed,
@@ -67,6 +68,18 @@ courses in this format as starting points:
 ```bash
 ./mvnw -q exec:java -Dexec.args="--course-file courses/classic.course"
 ```
+
+Or draw one. The editor opens on the built-in course, or on the given file if
+it exists:
+
+```bash
+./mvnw -q exec:java -Dexec.args="--edit --course-file courses/mine.course"
+```
+
+Drag on empty space to draw a barrier, drag a barrier or the target to move
+it, click a barrier and press Delete to remove it, and scroll over the target
+to resize it. Save writes the file; Run opens a simulation window on the
+course as drawn, and you can keep editing and run again.
 
 ## Layout
 

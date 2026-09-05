@@ -1,6 +1,7 @@
 package io.github.mikerada6.smartrocket;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -12,9 +13,10 @@ import java.util.Random;
  * @param courseFile          a course file that replaces the built-in course, including its world size
  * @param headlessGenerations when positive, run this many generations with no window and exit
  * @param seed                fixed random seed for a reproducible run, or empty for a random one
+ * @param edit                open the course editor instead of running
  */
 public record Arguments(SimulationConfig config, CourseLayout course, Optional<Path> courseFile, OptionalLong seed,
-                        int headlessGenerations, Path logPath, boolean help) {
+                        int headlessGenerations, Path logPath, boolean edit, boolean help) {
 
     public static final Path DEFAULT_LOG_PATH = Path.of("generations.csv");
 
@@ -34,6 +36,8 @@ public record Arguments(SimulationConfig config, CourseLayout course, Optional<P
                                  world size, so --width and --height are not allowed with it
               --seed N           random seed for a reproducible run (default: random)
               --headless N       run N generations without a window, then exit
+              --edit             open the course editor; with --course-file it edits that file
+                                 (created on save if it does not exist yet)
               --log PATH         CSV file for per-generation statistics (default generations.csv)
               --help             show this message
             """;
@@ -53,12 +57,17 @@ public record Arguments(SimulationConfig config, CourseLayout course, Optional<P
         OptionalLong seed = OptionalLong.empty();
         int headless = 0;
         Path logPath = DEFAULT_LOG_PATH;
+        boolean edit = false;
         boolean help = false;
 
         for (int i = 0; i < args.length; i++) {
             String flag = args[i];
             if (flag.equals("--help") || flag.equals("-h")) {
                 help = true;
+                continue;
+            }
+            if (flag.equals("--edit")) {
+                edit = true;
                 continue;
             }
             String value = valueFor(flag, args, i++);
@@ -90,8 +99,11 @@ public record Arguments(SimulationConfig config, CourseLayout course, Optional<P
         if (courseFile.isPresent() && sizeGiven) {
             throw new IllegalArgumentException("--width and --height cannot be combined with --course-file; the file sets the size");
         }
+        if (edit && headless > 0) {
+            throw new IllegalArgumentException("--edit needs a window and cannot be combined with --headless");
+        }
         SimulationConfig config = new SimulationConfig(width, height, population, lifespan, mutationRate, maxSpeed, eliteFraction);
-        return new Arguments(config, course, courseFile, seed, headless, logPath, help);
+        return new Arguments(config, course, courseFile, seed, headless, logPath, edit, help);
     }
 
     private static String valueFor(String flag, String[] args, int index) {
@@ -146,6 +158,17 @@ public record Arguments(SimulationConfig config, CourseLayout course, Optional<P
             return CourseFile.read(courseFile.get());
         }
         return course.create(config.width(), config.height());
+    }
+
+    /**
+     * The world to start editing: the course file if it exists, otherwise the built-in
+     * course, so a new file can be drawn from a sensible starting point.
+     */
+    public World loadWorldForEditing() throws IOException {
+        if (courseFile.isPresent() && !Files.exists(courseFile.get())) {
+            return course.create(config.width(), config.height());
+        }
+        return loadWorld();
     }
 
     public Random newRandom() {

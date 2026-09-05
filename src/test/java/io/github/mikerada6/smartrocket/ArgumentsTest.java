@@ -21,6 +21,7 @@ class ArgumentsTest {
         assertTrue(a.seed().isEmpty());
         assertFalse(a.headless());
         assertEquals(Arguments.DEFAULT_LOG_PATH, a.logPath());
+        assertFalse(a.edit());
         assertFalse(a.help());
     }
 
@@ -48,7 +49,7 @@ class ArgumentsTest {
     @Test
     void usageMentionsEveryOption() {
         for (String flag : new String[]{"--population", "--lifespan", "--width", "--height",
-                "--mutation-rate", "--max-speed", "--elite-fraction", "--course", "--course-file", "--seed", "--headless", "--log", "--help"}) {
+                "--mutation-rate", "--max-speed", "--elite-fraction", "--course", "--course-file", "--seed", "--headless", "--edit", "--log", "--help"}) {
             assertTrue(Arguments.USAGE.contains(flag), "usage lacks " + flag);
         }
     }
@@ -91,5 +92,14 @@ class ArgumentsTest {
     void withoutACourseFileTheBuiltInCourseIsScaledToTheConfiguredSize() throws IOException {
         Arguments a = Arguments.parse(new String[]{"--course", "EASY", "--width", "500", "--height", "400"});
         assertEquals(CourseLayout.EASY.create(500, 400), a.loadWorld());
+    }
+
+    @Test
+    void editModeIsParsedAndCannotBeHeadless(@org.junit.jupiter.api.io.TempDir Path dir) throws IOException {
+        Arguments a = Arguments.parse(new String[]{"--edit", "--course-file", dir.resolve("new.course").toString()});
+        assertTrue(a.edit());
+        assertEquals(CourseLayout.EASY.create(1024, 768), a.loadWorldForEditing(),
+                "a missing file starts from the built-in course");
+        assertMessageContains("--edit", () -> Arguments.parse(new String[]{"--edit", "--headless", "2"}));
     }
 }
