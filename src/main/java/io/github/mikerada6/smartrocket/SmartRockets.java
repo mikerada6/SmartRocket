@@ -27,12 +27,18 @@ public final class SmartRockets {
             System.out.print(Arguments.USAGE);
             return;
         }
-        if (arguments.headless()) {
-            GenerationStats last = runHeadless(arguments);
-            System.out.println(last);
-            return;
+        try {
+            if (arguments.headless()) {
+                GenerationStats last = runHeadless(arguments);
+                System.out.println(last);
+                return;
+            }
+            runWindowed(arguments);
+        } catch (IllegalArgumentException e) {
+            // A malformed course file is a user error, not a crash.
+            System.err.println(e.getMessage());
+            System.exit(2);
         }
-        runWindowed(arguments);
     }
 
     /**
@@ -41,8 +47,9 @@ public final class SmartRockets {
      * @return statistics of the final generation
      */
     public static GenerationStats runHeadless(Arguments arguments) throws IOException {
+        World world = arguments.loadWorld();
         try (GenerationLog log = new GenerationLog(arguments.logPath())) {
-            Simulation simulation = new Simulation(arguments.config(), arguments.world(), arguments.newRandom(), log);
+            Simulation simulation = new Simulation(arguments.config(), world, arguments.newRandom(), log);
             int steps = arguments.headlessGenerations() * arguments.config().lifespan();
             for (int i = 0; i < steps; i++) {
                 simulation.step();
@@ -52,6 +59,7 @@ public final class SmartRockets {
     }
 
     private static void runWindowed(Arguments arguments) throws IOException {
+        World world = arguments.loadWorld();
         GenerationLog log = new GenerationLog(arguments.logPath());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -60,7 +68,7 @@ public final class SmartRockets {
                 LOG.log(Level.WARNING, "could not close " + arguments.logPath(), e);
             }
         }));
-        Simulation simulation = new Simulation(arguments.config(), arguments.world(), arguments.newRandom(), log);
+        Simulation simulation = new Simulation(arguments.config(), world, arguments.newRandom(), log);
 
         SwingUtilities.invokeLater(() -> {
             JFrame window = new JFrame("Smart Rockets");

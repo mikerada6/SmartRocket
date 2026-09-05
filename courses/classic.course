@@ -1,0 +1,8 @@
+# SmartRocket course: size W H; target X Y RADIUS; barrier LEFT TOP WIDTH HEIGHT
+# The original three-barrier course at 1024x768. Solved by the default settings
+# in roughly 10 to 25 generations; see docs/adr/0005.
+size 1024 768
+target 512 50 25
+barrier 0 512 896 25
+barrier 256 256 768 25
+barrier 0 96 256 25

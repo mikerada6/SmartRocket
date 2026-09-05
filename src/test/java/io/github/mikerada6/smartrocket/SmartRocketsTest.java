@@ -32,4 +32,17 @@ class SmartRocketsTest {
         GenerationStats b = SmartRockets.runHeadless(Arguments.parse(args));
         assertEquals(a, b);
     }
+
+    @Test
+    void headlessRunAcceptsACourseFile(@TempDir Path dir) throws IOException {
+        Path course = dir.resolve("open.course");
+        Files.writeString(course, "size 300 300\ntarget 150 40 30\n");
+        Arguments arguments = Arguments.parse(new String[]{
+                "--headless", "2", "--population", "50", "--lifespan", "20", "--seed", "3",
+                "--course-file", course.toString(), "--log", dir.resolve("run.csv").toString()});
+
+        GenerationStats last = SmartRockets.runHeadless(arguments);
+
+        assertEquals(1, last.generation());
+    }
 }

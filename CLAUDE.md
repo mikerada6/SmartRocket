@@ -17,6 +17,7 @@ checked-in wrapper, Swing for rendering, JUnit 5 for tests.
 - `src/main/java/io/github/mikerada6/smartrocket/` application code, single package for now
 - `src/test/java/io/github/mikerada6/smartrocket/` unit tests, same package
 - `docs/adr/` architecture decision records, numbered `NNNN-title.md`
+- `courses/` example course files in the `CourseFile` text format; a test checks they match `CourseLayout`
 
 ## Conventions
 

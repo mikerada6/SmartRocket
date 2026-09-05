@@ -2,6 +2,7 @@ package io.github.mikerada6.smartrocket;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,6 +17,7 @@ class ArgumentsTest {
         Arguments a = Arguments.parse(new String[0]);
         assertEquals(SimulationConfig.defaults(), a.config());
         assertEquals(CourseLayout.EASY, a.course());
+        assertTrue(a.courseFile().isEmpty());
         assertTrue(a.seed().isEmpty());
         assertFalse(a.headless());
         assertEquals(Arguments.DEFAULT_LOG_PATH, a.logPath());
@@ -46,7 +48,7 @@ class ArgumentsTest {
     @Test
     void usageMentionsEveryOption() {
         for (String flag : new String[]{"--population", "--lifespan", "--width", "--height",
-                "--mutation-rate", "--max-speed", "--elite-fraction", "--course", "--seed", "--headless", "--log", "--help"}) {
+                "--mutation-rate", "--max-speed", "--elite-fraction", "--course", "--course-file", "--seed", "--headless", "--log", "--help"}) {
             assertTrue(Arguments.USAGE.contains(flag), "usage lacks " + flag);
         }
     }
@@ -73,5 +75,21 @@ class ArgumentsTest {
     private static void assertMessageContains(String expected, org.junit.jupiter.api.function.Executable call) {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, call);
         assertTrue(e.getMessage().contains(expected), "message '" + e.getMessage() + "' lacks '" + expected + "'");
+    }
+
+    @Test
+    void courseFileIsParsedAndExcludesExplicitSize() throws IOException {
+        Arguments a = Arguments.parse(new String[]{"--course-file", "courses/classic.course"});
+        assertEquals(Path.of("courses/classic.course"), a.courseFile().orElseThrow());
+        assertEquals(CourseLayout.CLASSIC.create(1024, 768), a.loadWorld());
+
+        assertMessageContains("--course-file", () -> Arguments.parse(new String[]{"--course-file", "x", "--width", "10"}));
+        assertMessageContains("--course-file", () -> Arguments.parse(new String[]{"--height", "10", "--course-file", "x"}));
+    }
+
+    @Test
+    void withoutACourseFileTheBuiltInCourseIsScaledToTheConfiguredSize() throws IOException {
+        Arguments a = Arguments.parse(new String[]{"--course", "EASY", "--width", "500", "--height", "400"});
+        assertEquals(CourseLayout.EASY.create(500, 400), a.loadWorld());
     }
 }

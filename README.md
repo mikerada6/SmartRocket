@@ -41,6 +41,7 @@ original course with a fixed seed and no window:
 | `--max-speed R` | speed limit in pixels per frame | 14 |
 | `--elite-fraction R` | share of the best rockets re-flown unchanged each generation | 0.01 |
 | `--course NAME` | `EASY` or `CLASSIC` | `EASY` |
+| `--course-file PATH` | load a course from a file; its size line sets the world size | none |
 | `--seed N` | random seed for a reproducible run | random |
 | `--headless N` | run N generations without a window, then exit | off |
 | `--log PATH` | CSV file for per-generation statistics | `generations.csv` | Each run writes
@@ -49,12 +50,31 @@ one CSV line per generation to `generations.csv` in the working directory
 and the age of the first hit). On Windows use
 `mvnw.cmd` instead of `./mvnw`.
 
+## Custom courses
+
+A course is a small text file. `#` starts a comment; `size` and `target`
+appear once, `barrier` any number of times:
+
+```
+size 1024 768          # world width and height in pixels
+target 512 50 25       # centre x, centre y, radius
+barrier 0 512 896 25   # left, top, width, height
+```
+
+Run it with `--course-file`. The `courses/` directory holds the two built-in
+courses in this format as starting points:
+
+```bash
+./mvnw -q exec:java -Dexec.args="--course-file courses/classic.course"
+```
+
 ## Layout
 
 ```
 src/main/java/io/github/mikerada6/smartrocket/   application code
 src/test/java/io/github/mikerada6/smartrocket/   unit tests
 docs/adr/                                         architecture decision records
+courses/                                          example course files
 ```
 
 ## Contributing
