@@ -2,10 +2,12 @@ package io.github.mikerada6.smartrocket;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SimulationTest {
@@ -83,5 +85,24 @@ class SimulationTest {
         assertTrue(maxHits > 0, "no rocket reached the target in 30 generations");
         assertTrue(simulation.lastAverageFitness() > firstGeneration,
                 "average fitness did not improve: " + firstGeneration + " -> " + simulation.lastAverageFitness());
+    }
+    @Test
+    void reportsStatsOncePerCompletedGeneration() {
+        List<GenerationStats> reported = new ArrayList<>();
+        Simulation simulation = new Simulation(SMALL, OPEN_WORLD, new Random(5), reported::add);
+        assertNull(simulation.lastGeneration());
+
+        runGenerations(simulation, 3);
+
+        assertEquals(3, reported.size());
+        for (int i = 0; i < 3; i++) {
+            GenerationStats stats = reported.get(i);
+            assertEquals(i, stats.generation());
+            assertTrue(stats.maxFitness() >= stats.averageFitness());
+            assertTrue(stats.hitRockets() + stats.crashedRockets() <= SMALL.populationSize());
+            assertTrue(stats.hitRockets() > 0 ? stats.firstHitAge() >= 0 : stats.firstHitAge() == -1);
+        }
+        assertEquals(reported.get(2), simulation.lastGeneration());
+        assertEquals(reported.get(2).averageFitness(), simulation.lastAverageFitness(), 0);
     }
 }

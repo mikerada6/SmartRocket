@@ -21,7 +21,10 @@ the population gradually learns a path. Rendering is plain Java Swing.
 ```
 
 `verify` compiles with all lint warnings enabled and runs the unit tests
-headless and offline. `exec:java` opens the simulation window. On Windows use
+headless and offline. `exec:java` opens the simulation window. Each run writes
+one CSV line per generation to `generations.csv` in the working directory
+(average and best fitness, rockets that hit the target, rockets that crashed,
+and the age of the first hit). On Windows use
 `mvnw.cmd` instead of `./mvnw`.
 
 ## Layout
