@@ -2,132 +2,82 @@ package io.github.mikerada6.smartrocket;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
-/** Swing view of a {@link Simulation}: steps it on a background thread and paints each frame. */
-public class GamePanel extends JPanel implements Runnable {
+/**
+ * Swing view of a {@link Simulation}. A {@link Timer} on the event dispatch thread steps
+ * the simulation and requests a repaint at a fixed rate; all drawing happens in
+ * {@link #paintComponent(Graphics)} on Swing's own double buffer.
+ */
+public final class GamePanel extends JPanel {
 
     public static final int FPS = 60;
+    private static final long serialVersionUID = 1L;
 
-    private final Simulation simulation;
-    private final int width;
-    private final int height;
-    private BufferedImage image;
-    private Graphics2D g;
-    private double averageFPS;
-    private Thread thread;
-    private volatile boolean running;
+    private final transient Simulation simulation;
+    private final Timer timer;
+    private int framesSinceSample;
+    private long sampleStartNanos;
+    private double measuredFps;
 
     public GamePanel(Simulation simulation) {
         this.simulation = simulation;
-        this.width = simulation.world().width();
-        this.height = simulation.world().height();
-        setPreferredSize(new Dimension(width, height));
-        setFocusable(true);
-        requestFocus();
-        try {
-            String str = "generation \ttotalFrameCount\t hit\n";
-            BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt"));
-            writer.write(str);
-            writer.close();
-        } catch (Exception e) {
-            System.out.println("Error: " + e);
-            int error = 0 / 0;
-        }
+        World world = simulation.world();
+        setPreferredSize(new Dimension(world.width(), world.height()));
+        setBackground(Color.BLACK);
+        timer = new Timer(1000 / FPS, e -> tick());
+        timer.setCoalesce(true);
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
-        if (thread == null) {
-            thread = new Thread(this);
-            thread.start();
-        }
+        sampleStartNanos = System.nanoTime();
+        timer.start();
     }
 
     @Override
-    public void run() {
-        running = true;
-
-        long startTime;
-        long URDTimeMillis;
-        long waitTime;
-        long totalTime = 0;
-
-        int frameCount = 0;
-        int maxFrameCount = FPS;
-
-        long targetTime = 1000 / FPS;
-
-        while (running) {
-            startTime = System.nanoTime();
-            image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            g = (Graphics2D) image.getGraphics();
-            gameUpdate();
-            gameRender();
-            gameDraw();
-
-            URDTimeMillis = (System.nanoTime() - startTime) / 1000000;
-            waitTime = targetTime - URDTimeMillis;
-
-            try {
-                Thread.sleep(waitTime);
-            } catch (Exception e) {
-
-            }
-            totalTime += System.nanoTime() - startTime;
-            frameCount++;
-            if (frameCount == maxFrameCount) {
-                averageFPS = 1000.0 / ((totalTime / frameCount) / 1000000.0);
-                frameCount = 0;
-                totalTime = 0;
-            }
-        }
+    public void removeNotify() {
+        timer.stop();
+        super.removeNotify();
     }
 
-    public void gameUpdate() {
-        int generation = simulation.generation();
-        int age = simulation.age();
+    private void tick() {
         simulation.step();
-        String str = generation + "\t" + age + "\t" + simulation.hitsThisFrame() + "\n";
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt", true));
-            writer.append(' ');
-            writer.append(str);
-            writer.close();
-        } catch (Exception e) {
-            System.out.println("Error: " + e);
-            int error = 0 / 0;
+        framesSinceSample++;
+        long now = System.nanoTime();
+        long elapsed = now - sampleStartNanos;
+        if (elapsed >= 1_000_000_000L) {
+            measuredFps = framesSinceSample * 1e9 / elapsed;
+            framesSinceSample = 0;
+            sampleStartNanos = now;
         }
+        repaint();
     }
 
-    public void gameRender() {
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        World world = simulation.world();
         g.setColor(Color.RED);
-        for (Barrier b : simulation.world().barriers()) {
+        for (Barrier b : world.barriers()) {
             b.draw(g);
         }
-        g.setColor(Color.WHITE);
         simulation.population().draw(g);
-        simulation.world().target().draw(g);
-        g.setColor(Color.WHITE);
-        g.drawString("Generation: " + simulation.generation(), 20, 20);
-        g.drawString("Age: " + simulation.age(), 20, 40);
-        double stat = simulation.lastAverageFitness();
-        if (stat != 0) {
-            g.drawString("Stat: " + stat, 20, 60);
-            g.drawString("FPS: " + averageFPS, 20, 80);
-            g.drawString("Hit: " + simulation.hitsThisFrame(), 20, 100);
-        } else {
-            g.drawString("FPS: " + averageFPS, 20, 60);
-            g.drawString("Hit: " + simulation.hitsThisFrame(), 20, 80);
-        }
+        world.target().draw(g);
+        drawHud(g);
     }
 
-    public void gameDraw() {
-        Graphics g2 = this.getGraphics();
-        g2.drawImage(image, 0, 0, null);
-        g2.dispose();
+    private void drawHud(Graphics g) {
+        g.setColor(Color.WHITE);
+        int y = 20;
+        g.drawString("Generation: " + simulation.generation(), 20, y);
+        g.drawString("Age: " + simulation.age(), 20, y += 20);
+        g.drawString(String.format("FPS: %.1f", measuredFps), 20, y += 20);
+        g.drawString("On target: " + simulation.hitsThisFrame(), 20, y += 20);
+        GenerationStats last = simulation.lastGeneration();
+        if (last != null) {
+            g.drawString(String.format("Last gen: avg %.1f  max %.1f  hit %d  crashed %d",
+                    last.averageFitness(), last.maxFitness(), last.hitRockets(), last.crashedRockets()), 20, y += 20);
+        }
     }
 }
