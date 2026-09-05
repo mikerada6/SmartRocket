@@ -156,6 +156,8 @@ public final class CourseEditorPanel extends JPanel {
         private Point dragStart;
         private Point dragCurrent;
         private boolean drawing;
+        /** Whether this drag has already recorded an undo step; a plain click never does. */
+        private boolean moveSnapshotTaken;
 
         Canvas() {
             setPreferredSize(new Dimension(model.width(), model.height()));
@@ -168,9 +170,7 @@ public final class CourseEditorPanel extends JPanel {
                     dragCurrent = e.getPoint();
                     selection = model.hitTest(e.getX(), e.getY());
                     drawing = selection instanceof CourseEditorModel.NoHit;
-                    if (!drawing) {
-                        model.snapshot();
-                    }
+                    moveSnapshotTaken = false;
                     refresh();
                 }
 
@@ -219,6 +219,13 @@ public final class CourseEditorPanel extends JPanel {
             int dx = p.x - dragCurrent.x;
             int dy = p.y - dragCurrent.y;
             dragCurrent = p;
+            if (dx == 0 && dy == 0) {
+                return;
+            }
+            if (!moveSnapshotTaken) {
+                model.snapshot();
+                moveSnapshotTaken = true;
+            }
             if (selection instanceof CourseEditorModel.TargetHit) {
                 model.moveTarget(dx, dy);
             } else if (selection instanceof CourseEditorModel.BarrierHit hit) {

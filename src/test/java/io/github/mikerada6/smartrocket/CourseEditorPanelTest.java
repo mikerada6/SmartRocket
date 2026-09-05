@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Drives the editor's canvas with synthetic mouse events; no window is needed for that. */
 class CourseEditorPanelTest {
@@ -92,5 +94,23 @@ class CourseEditorPanelTest {
             }
         }
         return found;
+    }
+
+    @Test
+    void clickingWithoutMovingNeitherDirtiesNorAddsAnUndoStep() {
+        CourseEditorPanel panel = new CourseEditorPanel(START, null, w -> { });
+        press(panel, 100, 160);
+        release(panel, 100, 160);
+        assertFalse(panel.model().isDirty());
+        assertFalse(panel.model().canUndo());
+        assertEquals(START, panel.model().toWorld());
+
+        press(panel, 100, 160);
+        drag(panel, 100, 165);
+        release(panel, 100, 165);
+        assertTrue(panel.model().isDirty());
+        assertTrue(panel.model().canUndo());
+        assertTrue(panel.model().undo());
+        assertEquals(START, panel.model().toWorld(), "one drag is one undo step");
     }
 }
