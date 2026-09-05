@@ -26,9 +26,9 @@ class ArgumentsTest {
     void everyOptionIsParsed() {
         Arguments a = Arguments.parse(new String[]{
                 "--population", "500", "--lifespan", "50", "--width", "640", "--height", "480",
-                "--mutation-rate", "0.05", "--course", "classic", "--seed", "7",
-                "--headless", "3", "--log", "out/run.csv"});
-        assertEquals(new SimulationConfig(640, 480, 500, 50, 0.05), a.config());
+                "--mutation-rate", "0.05", "--max-speed", "8", "--elites", "10",
+                "--course", "classic", "--seed", "7", "--headless", "3", "--log", "out/run.csv"});
+        assertEquals(new SimulationConfig(640, 480, 500, 50, 0.05, 8, 10), a.config());
         assertEquals(CourseLayout.CLASSIC, a.course());
         assertEquals(7, a.seed().getAsLong());
         assertTrue(a.headless());
@@ -45,7 +45,7 @@ class ArgumentsTest {
     @Test
     void usageMentionsEveryOption() {
         for (String flag : new String[]{"--population", "--lifespan", "--width", "--height",
-                "--mutation-rate", "--course", "--seed", "--headless", "--log", "--help"}) {
+                "--mutation-rate", "--max-speed", "--elites", "--course", "--seed", "--headless", "--log", "--help"}) {
             assertTrue(Arguments.USAGE.contains(flag), "usage lacks " + flag);
         }
     }
@@ -59,6 +59,8 @@ class ArgumentsTest {
         assertMessageContains("--bogus", () -> Arguments.parse(new String[]{"--bogus", "1"}));
         assertMessageContains("stray", () -> Arguments.parse(new String[]{"stray"}));
         assertMessageContains("mutationRate", () -> Arguments.parse(new String[]{"--mutation-rate", "1.5"}));
+        assertMessageContains("maxSpeed", () -> Arguments.parse(new String[]{"--max-speed", "0"}));
+        assertMessageContains("elites", () -> Arguments.parse(new String[]{"--elites", "20", "--population", "10"}));
     }
 
     @Test

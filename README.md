@@ -38,6 +38,8 @@ original course with a fixed seed and no window:
 | `--lifespan N` | frames each generation lives | 200 |
 | `--width N`, `--height N` | world size in pixels | 1024 x 768 |
 | `--mutation-rate R` | per-gene mutation probability | 0.01 |
+| `--max-speed R` | speed limit in pixels per frame | unlimited |
+| `--elites N` | best rockets copied unchanged into the next generation | 0 |
 | `--course NAME` | `EASY` or `CLASSIC` | `EASY` |
 | `--seed N` | random seed for a reproducible run | random |
 | `--headless N` | run N generations without a window, then exit | off |

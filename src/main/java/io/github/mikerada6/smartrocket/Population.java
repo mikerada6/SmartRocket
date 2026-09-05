@@ -1,5 +1,7 @@
 package io.github.mikerada6.smartrocket;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -20,7 +22,7 @@ public class Population {
         this.random = random;
         rockets = new Rocket[size];
         for (int i = 0; i < size; i++) {
-            rockets[i] = new Rocket(new DNA(config.lifespan(), config.mutationRate(), random), world);
+            rockets[i] = new Rocket(new DNA(config.lifespan(), config.mutationRate(), random), world, config.maxSpeed());
         }
     }
 
@@ -44,18 +46,30 @@ public class Population {
         return total / size;
     }
 
-    /** Replaces every rocket with a mutated child of two parents chosen in proportion to fitness. */
+    /**
+     * Breeds the next generation. The {@code elites} best rockets are re-flown with their
+     * genome unchanged so the best solution found so far is never lost; every other slot
+     * gets a mutated child of two parents chosen in proportion to fitness.
+     */
     public void selection() {
         if (parentPicker == null) {
             throw new IllegalStateException("evaluate() must run before selection()");
         }
         Rocket[] newRockets = new Rocket[size];
-        for (int i = 0; i < size; i++) {
+        int elites = config.elites();
+        if (elites > 0) {
+            Rocket[] ranked = rockets.clone();
+            Arrays.sort(ranked, Comparator.comparingDouble(Rocket::fitness).reversed());
+            for (int i = 0; i < elites; i++) {
+                newRockets[i] = new Rocket(ranked[i].getDna(), world, config.maxSpeed());
+            }
+        }
+        for (int i = elites; i < size; i++) {
             DNA parentA = rockets[parentPicker.pick()].getDna();
             DNA parentB = rockets[parentPicker.pick()].getDna();
             DNA child = parentA.crossover(parentB);
             child.mutation();
-            newRockets[i] = new Rocket(child, world);
+            newRockets[i] = new Rocket(child, world, config.maxSpeed());
         }
         this.rockets = newRockets;
         this.parentPicker = null;
