@@ -3,36 +3,27 @@ package io.github.mikerada6.smartrocket;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 
-
 public class Rocket implements Comparable<Rocket> {
 
-    public static final double maxvVelocity = 4;
+    /** Magnitude of every gene's thrust vector. */
+    public static final double MAX_THRUST = 4;
+    private static final int ROCKET_HEIGHT = 25;
+    private static final int ROCKET_WIDTH = 5;
+
+    private final World world;
+    private final DNA dna;
     private Vector pos;
     private Vector vel;
     private Vector acc;
-    private DNA dna;
-    private int rocketHeight = 25;
-    private int rocketWidth = 5;
     private boolean hitTarget;
     private boolean crashed;
     private double matingEligibility;
     private int stopTime;
 
-
-    public Rocket() {
-        dna = new DNA();
-        pos = new Vector(GamePanel.WIDTH / 2, GamePanel.HEIGHT - rocketHeight);
-        vel = new Vector(0, 0);
-        acc = new Vector(0, 0);
-        hitTarget = false;
-        crashed = false;
-        matingEligibility = 0;
-        stopTime = -1;
-    }
-
-    public Rocket(DNA dna) {
+    public Rocket(DNA dna, World world) {
         this.dna = dna;
-        pos = new Vector(GamePanel.WIDTH / 2, GamePanel.HEIGHT - rocketHeight);
+        this.world = world;
+        pos = new Vector(world.width() / 2, world.height() - ROCKET_HEIGHT);
         vel = new Vector(0, 0);
         acc = new Vector(0, 0);
         hitTarget = false;
@@ -41,31 +32,31 @@ public class Rocket implements Comparable<Rocket> {
         stopTime = -1;
     }
 
-    public void update() {
-        double d = distanceToTarget();
-        if (d < GamePanel.t.getSize()) {
+    /**
+     * Advances the rocket one frame using the gene for the given age.
+     *
+     * @return true if the rocket is on the target after this frame
+     */
+    public boolean update(int age) {
+        Target target = world.target();
+        if (distanceToTarget() < target.getSize()) {
             hitTarget = true;
-            pos = GamePanel.t.getPos().copy();
+            pos = target.getPos().copy();
         }
 
-
-        if (pos.getX() > GamePanel.WIDTH || pos.getX() < 0 || pos.getY() > GamePanel.HEIGHT || pos.getY() < 0) {
+        if (world.isOutOfBounds(pos)) {
             crashed = true;
         }
-        applyForce(dna.getGene(GamePanel.totalFrameCount));
+        applyForce(dna.getGene(age));
         if (!hitTarget && !crashed) {
             vel = vel.add(acc);
             pos = pos.add(vel);
             acc = acc.multiply(0);
-            //vel = vel.limit(maxvVelocity);
-
         }
-        if (hitTarget) {
-            GamePanel.hit++;
-            if (stopTime == -1) {
-                stopTime = GamePanel.age;
-            }
+        if (hitTarget && stopTime == -1) {
+            stopTime = age;
         }
+        return hitTarget;
     }
 
     public void applyForce(Vector v) {
@@ -73,23 +64,21 @@ public class Rocket implements Comparable<Rocket> {
     }
 
     public double distanceToTarget() {
-        return pos.dist(GamePanel.t.getPos());
+        return pos.dist(world.target().getPos());
     }
-
 
     public double calcFitness() {
         double d = distanceToTarget();
-        double fitness = GamePanel.map(d, (double) 0, (double) GamePanel.WIDTH, (double) GamePanel.HEIGHT, (double) 0);
+        double fitness = MathUtil.map(d, 0, world.width(), world.height(), 0);
         if (hitTarget) {
             fitness *= 10;
         } else if (crashed) {
             fitness /= 10;
         }
         if (stopTime != -1) {
-            fitness = fitness + GamePanel.map(stopTime, 0, DNA.lifespan, 20000, 0);
+            fitness = fitness + MathUtil.map(stopTime, 0, dna.length(), 20000, 0);
         }
         return fitness;
-
     }
 
     public Graphics draw(Graphics g) {
@@ -97,11 +86,11 @@ public class Rocket implements Comparable<Rocket> {
         Graphics2D g2 = (Graphics2D) g;
         double theta = pos.getAngleRadians();
 
-        transform.rotate(theta, this.pos.getX() + this.rocketWidth / 2, this.pos.getY() + this.rocketHeight / 2);
+        transform.rotate(theta, this.pos.getX() + ROCKET_WIDTH / 2, this.pos.getY() + ROCKET_HEIGHT / 2);
         AffineTransform old = g2.getTransform();
         g2.transform(transform);
         g2.setColor(dna.getColor());
-        g2.fillRect((int) this.pos.getX(), (int) this.pos.getY(), rocketWidth, rocketHeight);
+        g2.fillRect((int) this.pos.getX(), (int) this.pos.getY(), ROCKET_WIDTH, ROCKET_HEIGHT);
         g2.setTransform(old);
 
         return g;
@@ -113,6 +102,14 @@ public class Rocket implements Comparable<Rocket> {
 
     public double getYPos() {
         return this.pos.getY();
+    }
+
+    public boolean hasHitTarget() {
+        return hitTarget;
+    }
+
+    public boolean hasCrashed() {
+        return crashed;
     }
 
     public double getMatingEligibility() {
@@ -127,32 +124,21 @@ public class Rocket implements Comparable<Rocket> {
         return dna;
     }
 
-    public boolean checkBarriers(Barrier[] barriers) {
-
-        for(Barrier b: barriers) {
-            Rectangle me = new Rectangle((int)this.pos.getX() ,(int) this.pos.getY(), this.rocketWidth, this.rocketHeight);
-            Rectangle wall = new Rectangle(b.getLeft() ,b.getTop(), b.getWidth(), b.getHeight());
-            if(me.intersects(wall)) {
-                crashed=true;
-              return true;
+    /** Marks the rocket crashed if it overlaps any barrier in its world. */
+    public boolean checkBarriers() {
+        Rectangle me = new Rectangle((int) this.pos.getX(), (int) this.pos.getY(), ROCKET_WIDTH, ROCKET_HEIGHT);
+        for (Barrier b : world.barriers()) {
+            Rectangle wall = new Rectangle(b.getLeft(), b.getTop(), b.getWidth(), b.getHeight());
+            if (me.intersects(wall)) {
+                crashed = true;
+                return true;
             }
-
         }
         return false;
     }
 
-
-
-
     @Override
     public int compareTo(Rocket o) {
-        if (this.calcFitness() < o.calcFitness()) {
-            return -1;
-        } else if (this.calcFitness() > o.calcFitness()) {
-            return 1;
-        } else
-            return 0;
+        return Double.compare(this.calcFitness(), o.calcFitness());
     }
-
-
 }

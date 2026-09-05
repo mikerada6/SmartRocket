@@ -1,15 +1,20 @@
 package io.github.mikerada6.smartrocket;
 
 import javax.swing.*;
+import java.util.Random;
 
 public class SmartRockets {
     public static void main(String[] args) {
-        JFrame window = new JFrame("Smart Rockets");
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        SimulationConfig config = SimulationConfig.defaults();
+        World world = World.defaultLayout(config.width(), config.height());
+        Simulation simulation = new Simulation(config, world, new Random());
 
-        window.setContentPane(new GamePanel());
-
-        window.pack();
-        window.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            JFrame window = new JFrame("Smart Rockets");
+            window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            window.setContentPane(new GamePanel(simulation));
+            window.pack();
+            window.setVisible(true);
+        });
     }
 }
