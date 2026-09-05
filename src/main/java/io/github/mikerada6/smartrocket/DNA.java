@@ -6,16 +6,16 @@ import java.util.Random;
 /** A rocket's genome: one thrust vector per frame of life, plus a display colour. */
 public final class DNA {
 
-    /** Probability that any single gene is replaced by a fresh random one during mutation. */
-    private static final double MUTATION_RATE = 0.01;
-
     private final Random random;
+    /** Probability that any single gene is replaced by a fresh random one during mutation. */
+    private final double mutationRate;
     private final Vec2[] genes;
     private final Color color;
 
     /** A fully random genome of {@code lifespan} thrust vectors and a random colour. */
-    public DNA(int lifespan, Random random) {
+    public DNA(int lifespan, double mutationRate, Random random) {
         this.random = random;
+        this.mutationRate = mutationRate;
         genes = new Vec2[lifespan];
         for (int i = 0; i < genes.length; i++) {
             genes[i] = randomGene();
@@ -23,8 +23,9 @@ public final class DNA {
         color = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
     }
 
-    public DNA(Vec2[] genes, Color color, Random random) {
+    public DNA(Vec2[] genes, Color color, double mutationRate, Random random) {
         this.random = random;
+        this.mutationRate = mutationRate;
         this.genes = genes.clone();
         this.color = color;
     }
@@ -54,7 +55,7 @@ public final class DNA {
         for (int i = 0; i < genes.length; i++) {
             newgenes[i] = i > mid ? genes[i] : partner.genes[i];
         }
-        return new DNA(newgenes, blend(color, partner.color), random);
+        return new DNA(newgenes, blend(color, partner.color), mutationRate, random);
     }
 
     /** Root-mean-square blend of two colours, so mixing never darkens toward black. */
@@ -68,7 +69,7 @@ public final class DNA {
 
     public void mutation() {
         for (int i = 0; i < genes.length; i++) {
-            if (random.nextDouble() < MUTATION_RATE) {
+            if (random.nextDouble() < mutationRate) {
                 genes[i] = randomGene();
             }
         }

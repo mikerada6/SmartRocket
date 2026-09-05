@@ -36,7 +36,7 @@ public final class Simulation {
                       Consumer<GenerationStats> onGenerationComplete) {
         this.config = config;
         this.world = world;
-        this.population = new Population(config.populationSize(), config.lifespan(), world, random);
+        this.population = new Population(config, world, random);
         this.onGenerationComplete = onGenerationComplete;
         LOG.info(() -> "simulation created: " + config + ", " + world.barriers().size() + " barriers");
     }

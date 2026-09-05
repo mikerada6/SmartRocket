@@ -8,6 +8,8 @@ checked-in wrapper, Swing for rendering, JUnit 5 for tests.
 - Build and test: `./mvnw verify`
 - Run the app: `./mvnw exec:java`
 - Tests only: `./mvnw test`
+- Headless smoke run (no window, exits when done): `./mvnw -q exec:java -Dexec.args="--headless 3 --population 500 --seed 1"`
+- All options: `./mvnw -q exec:java -Dexec.args="--help"`
 
 ## Layout
 
