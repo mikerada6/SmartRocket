@@ -36,7 +36,7 @@ public record Arguments(SimulationConfig config, CourseLayout course, Optional<P
                                  world size, so --width and --height are not allowed with it
               --seed N           random seed for a reproducible run (default: random)
               --headless N       run N generations without a window, then exit
-              --edit             open the course editor; with --course-file it edits that file
+              --edit             start in the course editor; with --course-file it edits that file
                                  (created on save if it does not exist yet)
               --log PATH         CSV file for per-generation statistics (default generations.csv)
               --help             show this message

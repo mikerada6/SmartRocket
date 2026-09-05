@@ -40,8 +40,8 @@ class ControlBarTest {
         }
 
         @Override
-        public void editCourse() {
-            calls.add("edit");
+        public void setEditing(boolean editing) {
+            calls.add("editing=" + editing);
         }
     }
 
@@ -56,8 +56,12 @@ class ControlBarTest {
         bar.speedSlider().setValue(25);
         bar.coursePicker().setSelectedItem("CLASSIC");
         bar.coursePicker().setSelectedItem(ControlBar.OPEN_FILE);
+        bar.editButton().doClick();
+        bar.setEditing(false);
+        bar.setEditing(false);
 
-        assertEquals(List.of("paused=true", "paused=false", "steps=25", "course=CLASSIC", "openFile"), recorder.calls);
+        assertEquals(List.of("paused=true", "paused=false", "steps=25", "course=CLASSIC", "openFile",
+                "editing=true", "editing=false"), recorder.calls);
         assertEquals(25, bar.stepsPerFrame());
     }
 

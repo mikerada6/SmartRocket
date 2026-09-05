@@ -23,7 +23,8 @@ public final class ControlBar extends JPanel {
 
         void openCourseFile();
 
-        void editCourse();
+        /** True to switch to the course editor, false to return to the run. */
+        void setEditing(boolean editing);
     }
 
     private final transient Listener listener;
@@ -31,6 +32,7 @@ public final class ControlBar extends JPanel {
     private final JSlider speed = new JSlider(1, MAX_STEPS_PER_FRAME, 1);
     private final JLabel speedLabel = new JLabel();
     private final JComboBox<String> courses;
+    private final JToggleButton edit = new JToggleButton("Edit course");
     /** Set while the picker is being updated programmatically so the listener is not told. */
     private boolean updatingPicker;
 
@@ -64,9 +66,19 @@ public final class ControlBar extends JPanel {
         courses.addActionListener(e -> onCoursePicked());
         add(courses);
 
-        JButton edit = new JButton("Edit course");
-        edit.addActionListener(e -> listener.editCourse());
+        edit.addActionListener(e -> listener.setEditing(edit.isSelected()));
         add(edit);
+    }
+
+    /** Switches the edit toggle, telling the listener as if the user had clicked it. */
+    public void setEditing(boolean editing) {
+        if (edit.isSelected() != editing) {
+            edit.doClick();
+        }
+    }
+
+    public boolean isEditing() {
+        return edit.isSelected();
     }
 
     private void onCoursePicked() {
@@ -116,5 +128,9 @@ public final class ControlBar extends JPanel {
 
     JComboBox<String> coursePicker() {
         return courses;
+    }
+
+    JToggleButton editButton() {
+        return edit;
     }
 }

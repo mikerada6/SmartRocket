@@ -55,8 +55,10 @@ and the age of the first hit). On Windows use
 
 The toolbar has Pause, Restart, a speed slider (simulation steps per drawn
 frame, so 100x runs half a generation between frames), a course picker with
-the built-in courses and any file you open, and Edit course, which opens the
-editor on the current course and runs whatever you draw. The panel on the
+the built-in courses and any file you open, and an Edit course toggle that
+swaps the simulation for the editor in the same window. The run pauses while
+you edit; switching back, or pressing Run in the editor, restarts on the
+course as drawn. The panel on the
 right charts average and best fitness and the number of rockets on target or
 crashed for every generation of the current run.
 
@@ -83,8 +85,8 @@ courses in this format as starting points:
 ./mvnw -q exec:java -Dexec.args="--course-file courses/classic.course"
 ```
 
-Or draw one. The editor opens on the built-in course, or on the given file if
-it exists:
+Or draw one with the Edit course toggle in the window. `--edit` starts in the
+editor, on the built-in course or on the given file if it exists:
 
 ```bash
 ./mvnw -q exec:java -Dexec.args="--edit --course-file courses/mine.course"

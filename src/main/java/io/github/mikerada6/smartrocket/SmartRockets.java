@@ -60,33 +60,21 @@ public final class SmartRockets {
     }
 
     private static void runWindowed(Arguments arguments) throws IOException {
-        World world = arguments.loadWorld();
-        String name = arguments.courseFile().map(p -> p.getFileName().toString()).orElse(arguments.course().name());
-        Path file = arguments.courseFile().orElse(null);
-        SwingUtilities.invokeLater(() -> {
-            AppFrame frame = new AppFrame(arguments, world, name, file);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
+        open(arguments, arguments.loadWorld(), false);
     }
 
     private static void openEditor(Arguments arguments) throws IOException {
-        World world = arguments.loadWorldForEditing();
+        open(arguments, arguments.loadWorldForEditing(), true);
+    }
+
+    private static void open(Arguments arguments, World world, boolean editing) {
+        String name = arguments.courseFile().map(p -> p.getFileName().toString()).orElse(arguments.course().name());
         Path file = arguments.courseFile().orElse(null);
-        String name = file == null ? arguments.course().name() : file.getFileName().toString();
         SwingUtilities.invokeLater(() -> {
-            JFrame window = new JFrame("Smart Rockets course editor");
-            window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            // Run opens the full application window on the drawn course; closing it leaves the editor open.
-            window.setContentPane(new CourseEditorPanel(world, file, edited -> {
-                AppFrame frame = new AppFrame(arguments, edited, name, file);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.setLocationRelativeTo(window);
-                frame.setVisible(true);
-            }));
-            window.pack();
-            window.setVisible(true);
+            AppFrame frame = new AppFrame(arguments, world, name, file, editing);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
         });
     }
 }
