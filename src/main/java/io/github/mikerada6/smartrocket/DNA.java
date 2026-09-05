@@ -1,42 +1,37 @@
 package io.github.mikerada6.smartrocket;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Random;
 
-public class DNA {
+/** A rocket's genome: one thrust vector per frame of life, plus a display colour. */
+public final class DNA {
 
     /** Probability that any single gene is replaced by a fresh random one during mutation. */
     private static final double MUTATION_RATE = 0.01;
 
     private final Random random;
-    private final Vector[] genes;
-    private final int r;
-    private final int g;
-    private final int b;
+    private final Vec2[] genes;
+    private final Color color;
 
     /** A fully random genome of {@code lifespan} thrust vectors and a random colour. */
     public DNA(int lifespan, Random random) {
         this.random = random;
-        genes = new Vector[lifespan];
+        genes = new Vec2[lifespan];
         for (int i = 0; i < genes.length; i++) {
             genes[i] = randomGene();
         }
-        r = random.nextInt(255);
-        g = random.nextInt(255);
-        b = random.nextInt(255);
+        color = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
     }
 
-    public DNA(Vector[] genes, int r, int g, int b, Random random) {
+    public DNA(Vec2[] genes, Color color, Random random) {
         this.random = random;
-        this.genes = genes;
-        this.r = r;
-        this.g = g;
-        this.b = b;
+        this.genes = genes.clone();
+        this.color = color;
     }
 
-    private Vector randomGene() {
-        Vector direction = new Vector(random.nextInt(), random.nextInt());
-        return direction.setMag(Rocket.MAX_THRUST);
+    /** A thrust vector of fixed magnitude in a uniformly random direction. */
+    private Vec2 randomGene() {
+        return Vec2.fromAngle(random.nextDouble() * 2 * Math.PI, Rocket.MAX_THRUST);
     }
 
     /** Number of genes, which is also the number of frames a rocket lives. */
@@ -44,40 +39,31 @@ public class DNA {
         return genes.length;
     }
 
-    public Vector getGene(int i) {
+    public Vec2 getGene(int i) {
         return genes[i % genes.length];
     }
 
     public Color getColor() {
-        return new Color(r, g, b);
+        return color;
     }
 
+    /** Child taking genes up to a random point from {@code partner} and the rest from this genome. */
     public DNA crossover(DNA partner) {
         int mid = random.nextInt(genes.length);
-        Vector[] newgenes = new Vector[genes.length];
+        Vec2[] newgenes = new Vec2[genes.length];
         for (int i = 0; i < genes.length; i++) {
-            if (i > mid) {
-                newgenes[i] = genes[i];
-            } else {
-                newgenes[i] = partner.genes[i];
-            }
+            newgenes[i] = i > mid ? genes[i] : partner.genes[i];
         }
-        int newR = (int) Math.sqrt((this.r * this.r + partner.r * partner.r) / 2);
-        int newG = (int) Math.sqrt((this.g * this.g + partner.g * partner.g) / 2);
-        int newB = (int) Math.sqrt((this.b * this.b + partner.b * partner.b) / 2);
-        return new DNA(newgenes, newR, newG, newB, random);
+        return new DNA(newgenes, blend(color, partner.color), random);
     }
 
-    public int getR() {
-        return r;
+    /** Root-mean-square blend of two colours, so mixing never darkens toward black. */
+    private static Color blend(Color a, Color b) {
+        return new Color(rms(a.getRed(), b.getRed()), rms(a.getGreen(), b.getGreen()), rms(a.getBlue(), b.getBlue()));
     }
 
-    public int getG() {
-        return g;
-    }
-
-    public int getB() {
-        return b;
+    private static int rms(int a, int b) {
+        return (int) Math.sqrt((a * a + b * b) / 2.0);
     }
 
     public void mutation() {
@@ -91,7 +77,7 @@ public class DNA {
     @Override
     public String toString() {
         StringBuilder ans = new StringBuilder();
-        for (Vector gene : genes) {
+        for (Vec2 gene : genes) {
             ans.append(gene).append('\n');
         }
         return ans.toString();

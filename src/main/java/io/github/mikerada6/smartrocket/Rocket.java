@@ -1,34 +1,30 @@
 package io.github.mikerada6.smartrocket;
 
-import java.awt.*;
-import java.awt.geom.AffineTransform;
+import java.awt.Color;
 
-public class Rocket {
+/** One rocket flying a genome through a world. Holds no rendering code. */
+public final class Rocket {
 
     /** Magnitude of every gene's thrust vector. */
     public static final double MAX_THRUST = 4;
-    private static final int ROCKET_HEIGHT = 25;
-    private static final int ROCKET_WIDTH = 5;
+    /** Collision box and drawn size, in world units. */
+    public static final int WIDTH = 5;
+    public static final int HEIGHT = 25;
 
     private final World world;
     private final DNA dna;
-    private Vector pos;
-    private Vector vel;
-    private Vector acc;
+    private Vec2 pos;
+    private Vec2 vel = Vec2.ZERO;
+    private Vec2 acc = Vec2.ZERO;
     private boolean hitTarget;
     private boolean crashed;
     private double fitness;
-    private int stopTime;
+    private int stopTime = -1;
 
     public Rocket(DNA dna, World world) {
         this.dna = dna;
         this.world = world;
-        pos = new Vector(world.width() / 2, world.height() - ROCKET_HEIGHT);
-        vel = new Vector(0, 0);
-        acc = new Vector(0, 0);
-        hitTarget = false;
-        crashed = false;
-        stopTime = -1;
+        pos = new Vec2(world.width() / 2.0, world.height() - HEIGHT);
     }
 
     /**
@@ -38,32 +34,27 @@ public class Rocket {
      */
     public boolean update(int age) {
         Target target = world.target();
-        if (distanceToTarget() < target.getSize()) {
+        if (target.contains(pos)) {
             hitTarget = true;
-            pos = target.getPos().copy();
+            pos = target.centre();
         }
-
         if (world.isOutOfBounds(pos)) {
             crashed = true;
         }
-        applyForce(dna.getGene(age));
+        acc = acc.add(dna.getGene(age));
         if (!hitTarget && !crashed) {
             vel = vel.add(acc);
             pos = pos.add(vel);
-            acc = acc.multiply(0);
         }
+        acc = Vec2.ZERO;
         if (hitTarget && stopTime == -1) {
             stopTime = age;
         }
         return hitTarget;
     }
 
-    public void applyForce(Vector v) {
-        this.acc = acc.add(v);
-    }
-
     public double distanceToTarget() {
-        return pos.dist(world.target().getPos());
+        return pos.dist(world.target().centre());
     }
 
     /** Computes fitness for the current state, caches it, and returns it. */
@@ -91,27 +82,33 @@ public class Rocket {
         return fitness;
     }
 
-    public Graphics draw(Graphics g) {
-        AffineTransform transform = new AffineTransform();
-        Graphics2D g2 = (Graphics2D) g;
-        double theta = pos.getAngleRadians();
-
-        transform.rotate(theta, this.pos.getX() + ROCKET_WIDTH / 2, this.pos.getY() + ROCKET_HEIGHT / 2);
-        AffineTransform old = g2.getTransform();
-        g2.transform(transform);
-        g2.setColor(dna.getColor());
-        g2.fillRect((int) this.pos.getX(), (int) this.pos.getY(), ROCKET_WIDTH, ROCKET_HEIGHT);
-        g2.setTransform(old);
-
-        return g;
+    /** Marks the rocket crashed if its collision box overlaps any barrier in its world. */
+    public boolean checkBarriers() {
+        for (Barrier b : world.barriers()) {
+            if (b.overlaps(pos.x(), pos.y(), WIDTH, HEIGHT)) {
+                crashed = true;
+                return true;
+            }
+        }
+        return false;
     }
 
-    public double getXPos() {
-        return this.pos.getX();
+    /** Top-left corner of the rocket's collision box. */
+    public Vec2 position() {
+        return pos;
     }
 
-    public double getYPos() {
-        return this.pos.getY();
+    public Vec2 velocity() {
+        return vel;
+    }
+
+    /** Direction of travel in radians from the +x axis; straight up when not moving. */
+    public double heading() {
+        return vel.equals(Vec2.ZERO) ? -Math.PI / 2 : vel.heading();
+    }
+
+    public Color color() {
+        return dna.getColor();
     }
 
     public boolean hasHitTarget() {
@@ -124,18 +121,5 @@ public class Rocket {
 
     public DNA getDna() {
         return dna;
-    }
-
-    /** Marks the rocket crashed if it overlaps any barrier in its world. */
-    public boolean checkBarriers() {
-        Rectangle me = new Rectangle((int) this.pos.getX(), (int) this.pos.getY(), ROCKET_WIDTH, ROCKET_HEIGHT);
-        for (Barrier b : world.barriers()) {
-            Rectangle wall = new Rectangle(b.getLeft(), b.getTop(), b.getWidth(), b.getHeight());
-            if (me.intersects(wall)) {
-                crashed = true;
-                return true;
-            }
-        }
-        return false;
     }
 }

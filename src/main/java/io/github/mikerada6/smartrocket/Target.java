@@ -1,28 +1,13 @@
 package io.github.mikerada6.smartrocket;
 
-import java.awt.*;
+/**
+ * Circular goal. A rocket counts as arrived once its position is within {@code radius}
+ * of {@code centre}; the renderer draws exactly that circle, which the original code
+ * did not (it hit-tested around one point and drew the disc offset from it).
+ */
+public record Target(Vec2 centre, double radius) {
 
-public class Target {
-
-    private final Vector pos;
-    private final int size;
-
-    public Target(Vector pos, int size) {
-        this.pos = pos;
-        this.size = size;
-    }
-
-    public Graphics draw(Graphics g) {
-        g.setColor(Color.GREEN);
-        g.fillOval((int) this.pos.getX(), (int) this.pos.getY(), size, size);
-        return g;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public Vector getPos() {
-        return pos;
+    public boolean contains(Vec2 point) {
+        return centre.dist(point) < radius;
     }
 }
