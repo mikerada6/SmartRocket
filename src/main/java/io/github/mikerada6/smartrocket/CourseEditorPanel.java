@@ -13,9 +13,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Visual course editor. Drag on empty space to draw a barrier, drag a barrier or the
- * target to move it, click to select and press Delete to remove, scroll over the target
- * to resize it. The toolbar saves the course through {@link CourseFile} and runs it.
+ * Visual course editor. Drag on empty space to draw a barrier, drag a barrier, its edge,
+ * the target or the launch point to move or resize it, click to select and press Delete
+ * to remove, scroll over the target to resize it. The toolbar saves the course through
+ * {@link CourseFile} and runs it.
  */
 public final class CourseEditorPanel extends JPanel {
 
@@ -23,6 +24,7 @@ public final class CourseEditorPanel extends JPanel {
     private static final Logger LOG = Logger.getLogger(CourseEditorPanel.class.getName());
     private static final Color SELECTION = Color.YELLOW;
     private static final Color RUBBER_BAND = new Color(255, 255, 255, 120);
+    private static final Color GRID_DOT = new Color(255, 255, 255, 40);
 
     private final transient CourseEditorModel model;
     private final transient SimulationRenderer renderer = new SimulationRenderer();
@@ -30,6 +32,7 @@ public final class CourseEditorPanel extends JPanel {
     private final Canvas canvas;
     private final JLabel status = new JLabel();
     private final JButton undoButton = new JButton("Undo");
+    private final JToggleButton snapButton = new JToggleButton("Snap to grid", true);
     private transient Path file;
 
     /**
@@ -73,10 +76,15 @@ public final class CourseEditorPanel extends JPanel {
             model.clearBarriers();
             refresh();
         }));
+        snapButton.addActionListener(e -> {
+            model.setSnapToGrid(snapButton.isSelected());
+            refresh();
+        });
+        bar.add(snapButton);
         bar.addSeparator();
         bar.add(button("Run", e -> runner.accept(model.toWorld())));
         bar.addSeparator();
-        bar.add(new JLabel("  Drag: draw barrier / move  |  Delete: remove  |  Wheel over target: resize"));
+        bar.add(new JLabel("  Drag: draw / move / resize  |  Delete: remove  |  Wheel over target: resize"));
         return bar;
     }
 
@@ -118,7 +126,7 @@ public final class CourseEditorPanel extends JPanel {
 
     private void save(boolean askForFile) {
         if (askForFile || file == null) {
-            JFileChooser chooser = new JFileChooser();
+            JFileChooser chooser = new JFileChooser(Path.of("courses").toAbsolutePath().toFile());
             chooser.setDialogTitle("Save course");
             if (file != null) {
                 chooser.setSelectedFile(file.toFile());
@@ -143,7 +151,8 @@ public final class CourseEditorPanel extends JPanel {
         undoButton.setEnabled(model.canUndo());
         String name = file == null ? "unsaved course" : file.toString();
         status.setText("  " + name + (model.isDirty() ? " (modified)" : "") + "  |  "
-                + model.barriers().size() + " barriers  |  target radius " + (int) model.target().radius());
+                + model.barriers().size() + " barriers  |  target radius " + (int) model.target().radius()
+                + "  |  launch " + (int) model.launch().x() + "," + (int) model.launch().y());
         canvas.repaint();
     }
 
@@ -156,6 +165,9 @@ public final class CourseEditorPanel extends JPanel {
         private Point dragStart;
         private Point dragCurrent;
         private boolean drawing;
+        /** Pointer offset from the grabbed object's origin, so it does not jump to the pointer. */
+        private double grabDx;
+        private double grabDy;
         /** Whether this drag has already recorded an undo step; a plain click never does. */
         private boolean moveSnapshotTaken;
 
@@ -171,6 +183,7 @@ public final class CourseEditorPanel extends JPanel {
                     selection = model.hitTest(e.getX(), e.getY());
                     drawing = selection instanceof CourseEditorModel.NoHit;
                     moveSnapshotTaken = false;
+                    grabOffsetFor(selection, e.getX(), e.getY());
                     refresh();
                 }
 
@@ -202,6 +215,11 @@ public final class CourseEditorPanel extends JPanel {
                 }
 
                 @Override
+                public void mouseMoved(MouseEvent e) {
+                    setCursor(cursorFor(model.hitTest(e.getX(), e.getY())));
+                }
+
+                @Override
                 public void mouseWheelMoved(MouseWheelEvent e) {
                     if (model.hitTest(e.getX(), e.getY()) instanceof CourseEditorModel.TargetHit) {
                         model.resizeTarget(-e.getWheelRotation());
@@ -214,23 +232,62 @@ public final class CourseEditorPanel extends JPanel {
             addMouseWheelListener(mouse);
         }
 
-        /** Moves whatever is selected by the distance from the last drag point to {@code p}. */
+        private void grabOffsetFor(CourseEditorModel.Hit hit, int x, int y) {
+            if (hit instanceof CourseEditorModel.TargetHit) {
+                grabDx = x - model.target().centre().x();
+                grabDy = y - model.target().centre().y();
+            } else if (hit instanceof CourseEditorModel.LaunchHit) {
+                grabDx = x - model.launch().x();
+                grabDy = y - model.launch().y();
+            } else if (hit instanceof CourseEditorModel.BarrierHit b && !b.isEdge()) {
+                grabDx = x - model.barriers().get(b.index()).x();
+                grabDy = y - model.barriers().get(b.index()).y();
+            } else {
+                grabDx = 0;
+                grabDy = 0;
+            }
+        }
+
+        /** Moves or resizes whatever is selected so it follows the pointer at {@code p}. */
         private void moveSelectionTo(Point p) {
-            int dx = p.x - dragCurrent.x;
-            int dy = p.y - dragCurrent.y;
-            dragCurrent = p;
-            if (dx == 0 && dy == 0) {
+            if (p.equals(dragCurrent) && moveSnapshotTaken) {
                 return;
             }
+            if (p.equals(dragCurrent)) {
+                return;
+            }
+            dragCurrent = p;
             if (!moveSnapshotTaken) {
                 model.snapshot();
                 moveSnapshotTaken = true;
             }
             if (selection instanceof CourseEditorModel.TargetHit) {
-                model.moveTarget(dx, dy);
+                model.placeTarget(p.x - grabDx, p.y - grabDy);
+            } else if (selection instanceof CourseEditorModel.LaunchHit) {
+                model.placeLaunch(p.x - grabDx, p.y - grabDy);
             } else if (selection instanceof CourseEditorModel.BarrierHit hit) {
-                model.moveBarrier(hit.index(), dx, dy);
+                if (hit.isEdge()) {
+                    model.resizeBarrier(hit, p.x, p.y);
+                } else {
+                    model.placeBarrier(hit.index(), (int) Math.round(p.x - grabDx), (int) Math.round(p.y - grabDy));
+                }
             }
+        }
+
+        private Cursor cursorFor(CourseEditorModel.Hit hit) {
+            if (hit instanceof CourseEditorModel.BarrierHit b && b.isEdge()) {
+                boolean horizontal = b.left() || b.right();
+                boolean vertical = b.top() || b.bottom();
+                if (horizontal && vertical) {
+                    return Cursor.getPredefinedCursor((b.left() == b.top())
+                            ? Cursor.NW_RESIZE_CURSOR : Cursor.NE_RESIZE_CURSOR);
+                }
+                return Cursor.getPredefinedCursor(horizontal ? Cursor.E_RESIZE_CURSOR : Cursor.S_RESIZE_CURSOR);
+            }
+            if (hit instanceof CourseEditorModel.NoHit) {
+                return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+            }
+            return Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
         }
 
         void deleteSelection() {
@@ -245,6 +302,15 @@ public final class CourseEditorPanel extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
             renderer.drawWorld(g2, model.toWorld());
+            if (model.isSnapToGrid()) {
+                g2.setColor(GRID_DOT);
+                int step = CourseEditorModel.GRID * 4;
+                for (int x = 0; x <= model.width(); x += step) {
+                    for (int y = 0; y <= model.height(); y += step) {
+                        g2.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
             if (selection instanceof CourseEditorModel.BarrierHit hit && hit.index() < model.barriers().size()) {
                 Barrier b = model.barriers().get(hit.index());
                 g2.setColor(SELECTION);
@@ -254,6 +320,10 @@ public final class CourseEditorPanel extends JPanel {
                 int r = (int) Math.round(t.radius());
                 g2.setColor(SELECTION);
                 g2.drawOval((int) Math.round(t.centre().x()) - r, (int) Math.round(t.centre().y()) - r, 2 * r, 2 * r);
+            } else if (selection instanceof CourseEditorModel.LaunchHit) {
+                Vec2 l = model.launch();
+                g2.setColor(SELECTION);
+                g2.drawRect((int) l.x() - 2, (int) l.y() - 2, Rocket.WIDTH + 4, Rocket.HEIGHT + 4);
             }
             if (drawing && dragStart != null && dragCurrent != null) {
                 Barrier preview = model.barrierFromDrag(dragStart.x, dragStart.y, dragCurrent.x, dragCurrent.y);

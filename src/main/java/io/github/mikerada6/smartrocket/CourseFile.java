@@ -14,6 +14,7 @@ import java.util.List;
  * size 1024 768          # world width and height in pixels
  * target 512 50 25       # centre x, centre y, radius
  * barrier 0 512 896 25   # left, top, width, height; any number of these
+ * launch 512 743         # optional: where rockets start; bottom centre if absent
  * </pre>
  *
  * The format is deliberately not JSON: the JDK ships no JSON parser and the project
@@ -40,6 +41,7 @@ public final class CourseFile {
         Integer width = null;
         Integer height = null;
         Target target = null;
+        Vec2 launch = null;
         List<Barrier> barriers = new ArrayList<>();
         String[] lines = text.split("\n", -1);
         for (int i = 0; i < lines.length; i++) {
@@ -66,12 +68,19 @@ public final class CourseFile {
                     target = new Target(new Vec2(parseDouble(lineNumber, parts[1]), parseDouble(lineNumber, parts[2])),
                             parseDouble(lineNumber, parts[3]));
                 }
+                case "launch" -> {
+                    if (launch != null) {
+                        throw error(lineNumber, "launch given more than once");
+                    }
+                    requireArgs(lineNumber, parts, 2);
+                    launch = new Vec2(parseDouble(lineNumber, parts[1]), parseDouble(lineNumber, parts[2]));
+                }
                 case "barrier" -> {
                     requireArgs(lineNumber, parts, 4);
                     barriers.add(new Barrier(parseInt(lineNumber, parts[1]), parseInt(lineNumber, parts[2]),
                             parseInt(lineNumber, parts[3]), parseInt(lineNumber, parts[4])));
                 }
-                default -> throw error(lineNumber, "unknown statement '" + parts[0] + "', expected size, target or barrier");
+                default -> throw error(lineNumber, "unknown statement '" + parts[0] + "', expected size, target, launch or barrier");
             }
         }
         if (width == null) {
@@ -91,20 +100,26 @@ public final class CourseFile {
                 throw new IllegalArgumentException("barrier size must be positive: " + b);
             }
         }
-        World world = new World(width, height, target, barriers);
+        World world = launch == null
+                ? new World(width, height, target, barriers)
+                : new World(width, height, target, barriers, launch);
         if (world.isOutOfBounds(target.centre())) {
             throw new IllegalArgumentException("target centre " + target.centre() + " lies outside the " + width + "x" + height + " world");
+        }
+        if (world.isOutOfBounds(world.launch())) {
+            throw new IllegalArgumentException("launch point " + world.launch() + " lies outside the " + width + "x" + height + " world");
         }
         return world;
     }
 
     public static String format(World world) {
         StringBuilder out = new StringBuilder();
-        out.append("# SmartRocket course: size W H; target X Y RADIUS; barrier LEFT TOP WIDTH HEIGHT\n");
+        out.append("# SmartRocket course: size W H; target X Y RADIUS; launch X Y; barrier LEFT TOP WIDTH HEIGHT\n");
         out.append("size ").append(world.width()).append(' ').append(world.height()).append('\n');
         Target t = world.target();
         out.append("target ").append(number(t.centre().x())).append(' ').append(number(t.centre().y()))
                 .append(' ').append(number(t.radius())).append('\n');
+        out.append("launch ").append(number(world.launch().x())).append(' ').append(number(world.launch().y())).append('\n');
         for (Barrier b : world.barriers()) {
             out.append("barrier ").append(b.x()).append(' ').append(b.y()).append(' ')
                     .append(b.width()).append(' ').append(b.height()).append('\n');

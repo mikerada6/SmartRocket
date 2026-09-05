@@ -18,6 +18,7 @@ public final class SimulationRenderer {
     public static final Color CRASHED = new Color(80, 80, 88);
     public static final Color ELITE_OUTLINE = new Color(255, 255, 255, 200);
     public static final Color TRAIL = new Color(255, 255, 255, 70);
+    public static final Color LAUNCH = new Color(230, 230, 230, 160);
 
     /** Hue for a rocket as far from the target as possible (blue) and for one touching it (orange). */
     private static final float FAR_HUE = 0.62f;
@@ -27,6 +28,7 @@ public final class SimulationRenderer {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         World world = simulation.world();
         drawBackgroundAndBarriers(g, world);
+        drawLaunch(g, world.launch());
         List<Rocket> rockets = simulation.population().getRockets();
         for (Rocket rocket : rockets) {
             if (!rocket.isElite()) {
@@ -48,7 +50,19 @@ public final class SimulationRenderer {
     public void drawWorld(Graphics2D g, World world) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         drawBackgroundAndBarriers(g, world);
+        drawLaunch(g, world.launch());
         drawTarget(g, world.target());
+    }
+
+    /** Outline of a rocket at the launch point with a chevron above it, so the start is visible when empty. */
+    private static void drawLaunch(Graphics2D g, Vec2 launch) {
+        int x = (int) Math.round(launch.x());
+        int y = (int) Math.round(launch.y());
+        g.setColor(LAUNCH);
+        g.drawRect(x, y, Rocket.WIDTH, Rocket.HEIGHT);
+        int cx = x + Rocket.WIDTH / 2;
+        g.drawLine(cx - 5, y - 4, cx, y - 9);
+        g.drawLine(cx, y - 9, cx + 5, y - 4);
     }
 
     /**
