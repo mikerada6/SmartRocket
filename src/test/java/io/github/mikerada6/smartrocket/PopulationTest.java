@@ -27,7 +27,8 @@ class PopulationTest {
 
     @Test
     void elitesCarryTheBestGenomesUnchangedIntoTheNextGeneration() {
-        SimulationConfig config = new SimulationConfig(400, 400, 40, 30, 0.5, SimulationConfig.UNLIMITED_SPEED, 3);
+        SimulationConfig config = new SimulationConfig(400, 400, 40, 30, 0.5, SimulationConfig.UNLIMITED_SPEED, 0.075);
+        assertEquals(3, config.elites());
         Population population = flown(config, 8);
         population.evaluate();
         Set<DNA> bestThree = population.getRockets().stream()
@@ -49,7 +50,7 @@ class PopulationTest {
 
     @Test
     void withoutElitesEveryChildIsANewGenome() {
-        SimulationConfig config = new SimulationConfig(400, 400, 20, 30);
+        SimulationConfig config = new SimulationConfig(400, 400, 20, 30, 0.01, SimulationConfig.UNLIMITED_SPEED, 0);
         Population population = flown(config, 8);
         Set<DNA> before = population.getRockets().stream().map(Rocket::getDna).collect(Collectors.toSet());
         population.evaluate();
