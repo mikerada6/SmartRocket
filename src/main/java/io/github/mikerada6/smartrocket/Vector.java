@@ -1,3 +1,5 @@
+package io.github.mikerada6.smartrocket;
+
 public class Vector {
 
     private double x;

@@ -1,3 +1,5 @@
+package io.github.mikerada6.smartrocket;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;

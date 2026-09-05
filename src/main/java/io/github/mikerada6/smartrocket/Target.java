@@ -1,3 +1,5 @@
+package io.github.mikerada6.smartrocket;
+
 import java.awt.*;
 
 public class Target {
