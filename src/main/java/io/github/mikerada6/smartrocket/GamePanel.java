@@ -183,11 +183,14 @@ public class GamePanel extends JPanel implements Runnable {
     public void keyReleased(KeyEvent key) {
     }
 
+    /**
+     * Linearly maps {@code num} from the input range to the output range, extrapolating
+     * outside the input range. The output range may be reversed (min greater than max).
+     */
     public static double map(double num, double minInput, double maxInput, double minOutput, double maxOutput)
     {
-        double slope = (maxOutput-minOutput)/(maxInput-minOutput);
-        double b = maxOutput-minOutput*slope;
-        return slope * num + b;
+        double slope = (maxOutput - minOutput) / (maxInput - minInput);
+        return minOutput + slope * (num - minInput);
     }
 
 }
