@@ -43,6 +43,16 @@ class ControlBarTest {
         public void setEditing(boolean editing) {
             calls.add("editing=" + editing);
         }
+
+        @Override
+        public void setParametersVisible(boolean visible) {
+            calls.add("parameters=" + visible);
+        }
+
+        @Override
+        public void showHelp() {
+            calls.add("help");
+        }
     }
 
     @Test
@@ -59,10 +69,12 @@ class ControlBarTest {
         bar.editButton().doClick();
         bar.setEditing(false);
         bar.setEditing(false);
+        bar.setParametersVisible(true);
+        bar.setStepsPerFrame(40);
 
         assertEquals(List.of("paused=true", "paused=false", "steps=25", "course=CLASSIC", "openFile",
-                "editing=true", "editing=false"), recorder.calls);
-        assertEquals(25, bar.stepsPerFrame());
+                "editing=true", "editing=false", "parameters=true", "steps=40"), recorder.calls);
+        assertEquals(40, bar.stepsPerFrame());
     }
 
     @Test

@@ -115,4 +115,30 @@ class WorkspaceTest {
         }
         return found;
     }
+
+    @Test
+    void applyingParametersRestartsWithTheNewConfiguration(@TempDir Path dir) {
+        Workspace ws = workspace(dir, new AtomicInteger());
+        assertFalse(ws.isParametersVisible());
+        ws.controls().setParametersVisible(true);
+        assertTrue(ws.isParametersVisible());
+
+        ws.parameters().populationSpinner().setValue(35);
+        ws.parameters().applyButton().doClick();
+
+        assertEquals(35, ws.config().populationSize());
+        assertEquals(35, ws.gamePanel().simulation().population().getRockets().size());
+        assertEquals(400, ws.config().width(), "world size still follows the course");
+    }
+
+    @Test
+    void configurationFollowsTheCourseSizeButKeepsAppliedSettings(@TempDir Path dir) {
+        Workspace ws = workspace(dir, new AtomicInteger());
+        ws.parameters().populationSpinner().setValue(12);
+        ws.parameters().applyButton().doClick();
+        ws.startOn(new World(640, 480, new Target(new Vec2(320, 30), 20), java.util.List.of()), "big", null);
+        assertEquals(640, ws.config().width());
+        assertEquals(12, ws.config().populationSize());
+        assertEquals(640, ws.gamePanel().simulation().world().width());
+    }
 }
