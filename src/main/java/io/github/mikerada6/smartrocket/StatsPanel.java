@@ -15,6 +15,8 @@ public final class StatsPanel extends JComponent {
     private static final Color CRASHES = SimulationRenderer.BARRIER;
     private static final Color GRID = new Color(60, 60, 68);
     private static final int MARGIN = 12;
+    private static final int LEGEND_HEIGHT = 22;
+    private static final int SUMMARY_HEIGHT = 56;
 
     private final transient StatsHistory history = new StatsHistory();
     private int populationSize = 1;
@@ -47,7 +49,8 @@ public final class StatsPanel extends JComponent {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(getBackground());
         g2.fillRect(0, 0, getWidth(), getHeight());
-        int chartHeight = (getHeight() - 110) / 2;
+        // Each chart also needs its legend row, and the summary needs three text lines below.
+        int chartHeight = (getHeight() - 4 * MARGIN - 2 * LEGEND_HEIGHT - SUMMARY_HEIGHT) / 2;
         int y = MARGIN;
         y = drawChart(g2, y, chartHeight, "Fitness per generation", history.max(GenerationStats::maxFitness),
                 List.of(new Series("average", AVERAGE, GenerationStats::averageFitness),
@@ -102,7 +105,7 @@ public final class StatsPanel extends JComponent {
         }
         g.setColor(GRID);
         g.drawString(formatValue(maxValue), right - 40, plotTop + 10);
-        return bottom + 22;
+        return bottom + LEGEND_HEIGHT;
     }
 
     private void drawSummary(Graphics2D g, int top) {
