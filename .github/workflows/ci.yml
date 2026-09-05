@@ -21,6 +21,10 @@ jobs:
       - name: Build and test
         run: ./mvnw -B --no-transfer-progress verify
 
+      # Full-size simulation runs, tens of seconds each; excluded from the default lane.
+      - name: Slow tests
+        run: ./mvnw -B --no-transfer-progress -Pslow test -Dgroups=slow
+
       # Runs the real entry point for a few generations with no window.
       - name: Headless smoke run
         run: ./mvnw -q -B --no-transfer-progress exec:java -Dexec.args="--headless 3 --population 500 --seed 1 --log target/smoke.csv"
