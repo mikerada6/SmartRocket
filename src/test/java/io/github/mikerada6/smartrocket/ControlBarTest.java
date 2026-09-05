@@ -1,0 +1,73 @@
+package io.github.mikerada6.smartrocket;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ControlBarTest {
+
+    /** Records every call so a test can assert what the widgets asked for. */
+    private static final class Recorder implements ControlBar.Listener {
+        final List<String> calls = new ArrayList<>();
+
+        @Override
+        public void setPaused(boolean paused) {
+            calls.add("paused=" + paused);
+        }
+
+        @Override
+        public void restart() {
+            calls.add("restart");
+        }
+
+        @Override
+        public void setStepsPerFrame(int steps) {
+            calls.add("steps=" + steps);
+        }
+
+        @Override
+        public void selectCourse(String name) {
+            calls.add("course=" + name);
+        }
+
+        @Override
+        public void openCourseFile() {
+            calls.add("openFile");
+        }
+
+        @Override
+        public void editCourse() {
+            calls.add("edit");
+        }
+    }
+
+    @Test
+    void widgetsForwardToTheListener() {
+        Recorder recorder = new Recorder();
+        ControlBar bar = new ControlBar(recorder, List.of("EASY", "CLASSIC"), "EASY");
+        assertTrue(recorder.calls.isEmpty(), "construction must not fire anything");
+
+        bar.pauseButton().doClick();
+        bar.pauseButton().doClick();
+        bar.speedSlider().setValue(25);
+        bar.coursePicker().setSelectedItem("CLASSIC");
+        bar.coursePicker().setSelectedItem(ControlBar.OPEN_FILE);
+
+        assertEquals(List.of("paused=true", "paused=false", "steps=25", "course=CLASSIC", "openFile"), recorder.calls);
+        assertEquals(25, bar.stepsPerFrame());
+    }
+
+    @Test
+    void showCourseAddsUnknownNamesWithoutFiringTheListener() {
+        Recorder recorder = new Recorder();
+        ControlBar bar = new ControlBar(recorder, List.of("EASY", "CLASSIC"), "EASY");
+        bar.showCourse("mine.course");
+        assertEquals("mine.course", bar.coursePicker().getSelectedItem());
+        assertEquals(4, bar.coursePicker().getItemCount(), "EASY, CLASSIC, mine.course, open file");
+        assertTrue(recorder.calls.isEmpty());
+    }
+}

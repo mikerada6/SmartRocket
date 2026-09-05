@@ -3,13 +3,9 @@ package io.github.mikerada6.smartrocket;
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /** Entry point: parses the command line and runs either the window or a headless batch. */
 public final class SmartRockets {
-
-    private static final Logger LOG = Logger.getLogger(SmartRockets.class.getName());
 
     private SmartRockets() {
     }
@@ -65,54 +61,32 @@ public final class SmartRockets {
 
     private static void runWindowed(Arguments arguments) throws IOException {
         World world = arguments.loadWorld();
-        SwingUtilities.invokeLater(() -> openSimulationWindow(arguments, world, JFrame.EXIT_ON_CLOSE));
+        String name = arguments.courseFile().map(p -> p.getFileName().toString()).orElse(arguments.course().name());
+        Path file = arguments.courseFile().orElse(null);
+        SwingUtilities.invokeLater(() -> {
+            AppFrame frame = new AppFrame(arguments, world, name, file);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 
     private static void openEditor(Arguments arguments) throws IOException {
         World world = arguments.loadWorldForEditing();
         Path file = arguments.courseFile().orElse(null);
+        String name = file == null ? arguments.course().name() : file.getFileName().toString();
         SwingUtilities.invokeLater(() -> {
             JFrame window = new JFrame("Smart Rockets course editor");
             window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            // Each Run opens its own simulation window; closing one leaves the editor open.
-            window.setContentPane(new CourseEditorPanel(world, file,
-                    edited -> openSimulationWindow(arguments, edited, JFrame.DISPOSE_ON_CLOSE)));
+            // Run opens the full application window on the drawn course; closing it leaves the editor open.
+            window.setContentPane(new CourseEditorPanel(world, file, edited -> {
+                AppFrame frame = new AppFrame(arguments, edited, name, file);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.setLocationRelativeTo(window);
+                frame.setVisible(true);
+            }));
             window.pack();
             window.setVisible(true);
         });
-    }
-
-    /** Opens a simulation window on the event dispatch thread; the log is closed when the window closes. */
-    private static void openSimulationWindow(Arguments arguments, World world, int closeOperation) {
-        GenerationLog log;
-        try {
-            log = new GenerationLog(arguments.logPath());
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "could not open " + arguments.logPath(), e);
-            JOptionPane.showMessageDialog(null, "Could not open " + arguments.logPath() + ":\n" + e.getMessage(),
-                    "Cannot start", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        Simulation simulation = new Simulation(arguments.config(), world, arguments.newRandom(), log);
-        JFrame window = new JFrame("Smart Rockets");
-        window.setDefaultCloseOperation(closeOperation);
-        window.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
-                closeQuietly(log, arguments.logPath());
-            }
-        });
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> closeQuietly(log, arguments.logPath())));
-        window.setContentPane(new GamePanel(simulation));
-        window.pack();
-        window.setVisible(true);
-    }
-
-    private static void closeQuietly(GenerationLog log, Path path) {
-        try {
-            log.close();
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "could not close " + path, e);
-        }
     }
 }

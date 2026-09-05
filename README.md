@@ -51,6 +51,20 @@ one CSV line per generation to `generations.csv` in the working directory
 and the age of the first hit). On Windows use
 `mvnw.cmd` instead of `./mvnw`.
 
+## The window
+
+The toolbar has Pause, Restart, a speed slider (simulation steps per drawn
+frame, so 100x runs half a generation between frames), a course picker with
+the built-in courses and any file you open, and Edit course, which opens the
+editor on the current course and runs whatever you draw. The panel on the
+right charts average and best fitness and the number of rockets on target or
+crashed for every generation of the current run.
+
+Rockets are coloured by state: blue when far from the target shading to
+orange as they approach, white once on the target, grey after a crash. The
+best rockets of the previous generation, re-flown unchanged, are outlined in
+white and leave a trail.
+
 ## Custom courses
 
 A course is a small text file. `#` starts a comment; `size` and `target`

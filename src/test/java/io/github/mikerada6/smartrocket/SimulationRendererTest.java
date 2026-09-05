@@ -22,16 +22,49 @@ class SimulationRendererTest {
         new SimulationRenderer().render(g, simulation, 60);
         g.dispose();
 
-        assertEquals(Color.BLACK.getRGB(), image.getRGB(190, 190), "background");
-        assertEquals(Color.RED.getRGB(), image.getRGB(50, 105), "barrier interior");
-        assertEquals(Color.GREEN.getRGB(), image.getRGB(150, 30), "target centre");
-        assertEquals(Color.GREEN.getRGB(), image.getRGB(150, 22), "target edge lies at the hit radius");
-        assertEquals(Color.BLACK.getRGB(), image.getRGB(150, 5), "outside the target");
+        assertEquals(SimulationRenderer.BACKGROUND.getRGB(), image.getRGB(190, 190), "background");
+        assertEquals(SimulationRenderer.BARRIER.getRGB(), image.getRGB(50, 105), "barrier interior");
+        assertEquals(SimulationRenderer.TARGET.getRGB(), image.getRGB(150, 30), "target centre");
+        assertEquals(SimulationRenderer.TARGET.getRGB(), image.getRGB(150, 22), "target edge lies at the hit radius");
+        assertEquals(SimulationRenderer.BACKGROUND.getRGB(), image.getRGB(150, 5), "outside the target");
 
         Rocket rocket = simulation.population().getRockets().get(0);
         Vec2 pos = rocket.position();
         int rx = (int) pos.x() + Rocket.WIDTH / 2;
         int ry = (int) pos.y() + Rocket.HEIGHT / 2;
-        assertEquals(rocket.color().getRGB(), image.getRGB(rx, ry), "rocket centre");
+        assertEquals(SimulationRenderer.colorFor(rocket, world).getRGB(), image.getRGB(rx, ry), "rocket centre");
+    }
+
+    @Test
+    void rocketColourEncodesStateAndDistance() {
+        World world = new World(400, 400, new Target(new Vec2(200, 50), 25), List.of());
+        Vec2[] up = new Vec2[40];
+        java.util.Arrays.fill(up, new Vec2(0, -Rocket.MAX_THRUST));
+        Vec2[] right = new Vec2[40];
+        java.util.Arrays.fill(right, new Vec2(Rocket.MAX_THRUST, 0));
+        Random random = new Random(1);
+        double rate = SimulationConfig.DEFAULT_MUTATION_RATE;
+
+        Rocket still = new Rocket(new DNA(up, Color.WHITE, rate, random), world);
+        Color far = SimulationRenderer.colorFor(still, world);
+        Rocket flying = new Rocket(new DNA(up, Color.WHITE, rate, random), world);
+        for (int age = 0; age < 8; age++) {
+            flying.update(age);
+        }
+        Color nearer = SimulationRenderer.colorFor(flying, world);
+        float[] farHsb = Color.RGBtoHSB(far.getRed(), far.getGreen(), far.getBlue(), null);
+        float[] nearHsb = Color.RGBtoHSB(nearer.getRed(), nearer.getGreen(), nearer.getBlue(), null);
+        assertEquals(true, nearHsb[0] < farHsb[0], "closer rockets are warmer: " + nearHsb[0] + " vs " + farHsb[0]);
+
+        for (int age = 8; age < 40; age++) {
+            flying.update(age);
+        }
+        assertEquals(SimulationRenderer.ON_TARGET, SimulationRenderer.colorFor(flying, world));
+
+        Rocket crashed = new Rocket(new DNA(right, Color.WHITE, rate, random), world);
+        for (int age = 0; age < 40; age++) {
+            crashed.update(age);
+        }
+        assertEquals(SimulationRenderer.CRASHED, SimulationRenderer.colorFor(crashed, world));
     }
 }

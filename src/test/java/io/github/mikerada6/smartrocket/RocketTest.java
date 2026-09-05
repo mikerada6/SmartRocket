@@ -103,4 +103,21 @@ class RocketTest {
         unlimited.update(2);
         assertTrue(unlimited.velocity().mag() > 6);
     }
+
+    @Test
+    void onlyElitesKeepATrailAndItIsBounded() {
+        Rocket plain = new Rocket(constantDna(UP), OPEN_WORLD);
+        plain.update(0);
+        assertTrue(plain.trail().isEmpty());
+        assertFalse(plain.isElite());
+
+        Rocket elite = new Rocket(constantDna(new Vec2(0, -0.5)), OPEN_WORLD, 2);
+        elite.markElite();
+        for (int age = 0; age < Rocket.TRAIL_LENGTH + 10; age++) {
+            elite.update(age);
+        }
+        assertTrue(elite.isElite());
+        assertEquals(Rocket.TRAIL_LENGTH, elite.trail().size());
+        assertEquals(elite.position(), elite.trail().get(Rocket.TRAIL_LENGTH - 1), "newest position is last");
+    }
 }

@@ -1,6 +1,9 @@
 package io.github.mikerada6.smartrocket;
 
 import java.awt.Color;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 
 /** One rocket flying a genome through a world. Holds no rendering code. */
 public final class Rocket {
@@ -10,6 +13,8 @@ public final class Rocket {
     /** Collision box and drawn size, in world units. */
     public static final int WIDTH = 5;
     public static final int HEIGHT = 25;
+    /** Positions remembered for drawing an elite's path. */
+    public static final int TRAIL_LENGTH = 40;
 
     private final World world;
     private final DNA dna;
@@ -21,6 +26,8 @@ public final class Rocket {
     private boolean crashed;
     private double fitness;
     private int stopTime = -1;
+    private boolean elite;
+    private Deque<Vec2> trail;
 
     public Rocket(DNA dna, World world) {
         this(dna, world, SimulationConfig.UNLIMITED_SPEED);
@@ -52,6 +59,12 @@ public final class Rocket {
         if (!hitTarget && !crashed) {
             vel = vel.add(acc).limit(maxSpeed);
             pos = pos.add(vel);
+            if (trail != null) {
+                trail.addLast(pos);
+                if (trail.size() > TRAIL_LENGTH) {
+                    trail.removeFirst();
+                }
+            }
         }
         acc = Vec2.ZERO;
         if (hitTarget && stopTime == -1) {
@@ -116,6 +129,21 @@ public final class Rocket {
 
     public Color color() {
         return dna.getColor();
+    }
+
+    /** Marks this rocket as one of the previous generation's best, re-flown unchanged; enables its trail. */
+    public void markElite() {
+        elite = true;
+        trail = new ArrayDeque<>(TRAIL_LENGTH + 1);
+    }
+
+    public boolean isElite() {
+        return elite;
+    }
+
+    /** Recent positions, oldest first; empty unless the rocket is an elite. */
+    public List<Vec2> trail() {
+        return trail == null ? List.of() : List.copyOf(trail);
     }
 
     public boolean hasHitTarget() {
