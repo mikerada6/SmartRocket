@@ -13,6 +13,7 @@ public final class Rocket {
 
     private final World world;
     private final DNA dna;
+    private final double maxSpeed;
     private Vec2 pos;
     private Vec2 vel = Vec2.ZERO;
     private Vec2 acc = Vec2.ZERO;
@@ -22,8 +23,14 @@ public final class Rocket {
     private int stopTime = -1;
 
     public Rocket(DNA dna, World world) {
+        this(dna, world, SimulationConfig.UNLIMITED_SPEED);
+    }
+
+    /** @param maxSpeed upper bound on speed in pixels per frame; infinity for none */
+    public Rocket(DNA dna, World world, double maxSpeed) {
         this.dna = dna;
         this.world = world;
+        this.maxSpeed = maxSpeed;
         pos = new Vec2(world.width() / 2.0, world.height() - HEIGHT);
     }
 
@@ -43,7 +50,7 @@ public final class Rocket {
         }
         acc = acc.add(dna.getGene(age));
         if (!hitTarget && !crashed) {
-            vel = vel.add(acc);
+            vel = vel.add(acc).limit(maxSpeed);
             pos = pos.add(vel);
         }
         acc = Vec2.ZERO;

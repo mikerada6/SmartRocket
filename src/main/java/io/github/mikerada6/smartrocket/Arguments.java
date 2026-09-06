@@ -24,6 +24,8 @@ public record Arguments(SimulationConfig config, CourseLayout course, OptionalLo
               --width N          world width in pixels (default 1024)
               --height N         world height in pixels (default 768)
               --mutation-rate R  per-gene mutation probability, 0 to 1 (default 0.01)
+              --max-speed R      speed limit in pixels per frame (default 14)
+              --elite-fraction R share of the best rockets re-flown unchanged, 0 to 1 (default 0.01)
               --course NAME      EASY or CLASSIC (default EASY)
               --seed N           random seed for a reproducible run (default: random)
               --headless N       run N generations without a window, then exit
@@ -38,6 +40,8 @@ public record Arguments(SimulationConfig config, CourseLayout course, OptionalLo
         int population = defaults.populationSize();
         int lifespan = defaults.lifespan();
         double mutationRate = defaults.mutationRate();
+        double maxSpeed = defaults.maxSpeed();
+        double eliteFraction = defaults.eliteFraction();
         CourseLayout course = CourseLayout.EASY;
         OptionalLong seed = OptionalLong.empty();
         int headless = 0;
@@ -57,6 +61,8 @@ public record Arguments(SimulationConfig config, CourseLayout course, OptionalLo
                 case "--width" -> width = parseInt(flag, value);
                 case "--height" -> height = parseInt(flag, value);
                 case "--mutation-rate" -> mutationRate = parseDouble(flag, value);
+                case "--max-speed" -> maxSpeed = parseDouble(flag, value);
+                case "--elite-fraction" -> eliteFraction = parseDouble(flag, value);
                 case "--course" -> course = parseCourse(value);
                 case "--seed" -> seed = OptionalLong.of(parseLong(flag, value));
                 case "--headless" -> headless = parseInt(flag, value);
@@ -67,7 +73,7 @@ public record Arguments(SimulationConfig config, CourseLayout course, OptionalLo
         if (headless < 0) {
             throw new IllegalArgumentException("--headless must not be negative: " + headless);
         }
-        SimulationConfig config = new SimulationConfig(width, height, population, lifespan, mutationRate);
+        SimulationConfig config = new SimulationConfig(width, height, population, lifespan, mutationRate, maxSpeed, eliteFraction);
         return new Arguments(config, course, seed, headless, logPath, help);
     }
 

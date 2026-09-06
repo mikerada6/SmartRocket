@@ -89,4 +89,18 @@ class RocketTest {
         rocket.update(0);
         assertEquals(0, rocket.heading(), 1e-9);
     }
+
+    @Test
+    void speedNeverExceedsTheConfiguredLimit() {
+        Rocket rocket = new Rocket(constantDna(UP), OPEN_WORLD, 6);
+        for (int age = 0; age < LIFESPAN; age++) {
+            rocket.update(age);
+            assertTrue(rocket.velocity().mag() <= 6 + 1e-9, "speed " + rocket.velocity().mag() + " at age " + age);
+        }
+        Rocket unlimited = new Rocket(constantDna(UP), OPEN_WORLD);
+        unlimited.update(0);
+        unlimited.update(1);
+        unlimited.update(2);
+        assertTrue(unlimited.velocity().mag() > 6);
+    }
 }

@@ -22,6 +22,7 @@
     <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
     <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
     <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+    <test.excludedGroups>slow</test.excludedGroups>
   </properties>
 
   <dependencies>
@@ -32,6 +33,16 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <!-- Opt-in lane for full-size simulation runs. -->
+      <id>slow</id>
+      <properties>
+        <test.excludedGroups></test.excludedGroups>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <plugins>
@@ -56,6 +67,8 @@
           <systemPropertyVariables>
             <java.awt.headless>true</java.awt.headless>
           </systemPropertyVariables>
+          <!-- Tests tagged "slow" take tens of seconds; run them with -Pslow. -->
+          <excludedGroups>${test.excludedGroups}</excludedGroups>
         </configuration>
       </plugin>
 
