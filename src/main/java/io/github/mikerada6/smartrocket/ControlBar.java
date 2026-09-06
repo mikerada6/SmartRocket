@@ -25,6 +25,10 @@ public final class ControlBar extends JPanel {
 
         /** True to switch to the course editor, false to return to the run. */
         void setEditing(boolean editing);
+
+        void setParametersVisible(boolean visible);
+
+        void showHelp();
     }
 
     private final transient Listener listener;
@@ -33,6 +37,7 @@ public final class ControlBar extends JPanel {
     private final JLabel speedLabel = new JLabel();
     private final JComboBox<String> courses;
     private final JToggleButton edit = new JToggleButton("Edit course");
+    private final JToggleButton parameters = new JToggleButton("Parameters");
     /** Set while the picker is being updated programmatically so the listener is not told. */
     private boolean updatingPicker;
 
@@ -66,8 +71,27 @@ public final class ControlBar extends JPanel {
         courses.addActionListener(e -> onCoursePicked());
         add(courses);
 
+        parameters.addActionListener(e -> listener.setParametersVisible(parameters.isSelected()));
+        add(parameters);
+
         edit.addActionListener(e -> listener.setEditing(edit.isSelected()));
         add(edit);
+
+        JButton help = new JButton("Help");
+        help.addActionListener(e -> listener.showHelp());
+        add(help);
+    }
+
+    /** Sets the speed slider, telling the listener as if the user had moved it. */
+    public void setStepsPerFrame(int steps) {
+        speed.setValue(steps);
+    }
+
+    /** Switches the parameters toggle, telling the listener as if the user had clicked it. */
+    public void setParametersVisible(boolean visible) {
+        if (parameters.isSelected() != visible) {
+            parameters.doClick();
+        }
     }
 
     /** Switches the edit toggle, telling the listener as if the user had clicked it. */
@@ -132,5 +156,9 @@ public final class ControlBar extends JPanel {
 
     JToggleButton editButton() {
         return edit;
+    }
+
+    JToggleButton parametersButton() {
+        return parameters;
     }
 }

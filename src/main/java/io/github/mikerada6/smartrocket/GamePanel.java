@@ -94,9 +94,34 @@ public final class GamePanel extends JPanel {
         repaint();
     }
 
+    /**
+     * Scale that fits the world into the panel while keeping its aspect ratio; 1 when the
+     * panel is exactly the world's size.
+     */
+    public double viewScale() {
+        World world = simulation.world();
+        if (getWidth() <= 0 || getHeight() <= 0) {
+            return 1;
+        }
+        return Math.min((double) getWidth() / world.width(), (double) getHeight() / world.height());
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        renderer.render((Graphics2D) g, simulation, measuredFps);
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            World world = simulation.world();
+            double scale = viewScale();
+            // Centre the scaled world in whatever space the window gives us.
+            double dx = (getWidth() - world.width() * scale) / 2;
+            double dy = (getHeight() - world.height() * scale) / 2;
+            g2.translate(dx, dy);
+            g2.scale(scale, scale);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            renderer.render(g2, simulation, measuredFps);
+        } finally {
+            g2.dispose();
+        }
     }
 }

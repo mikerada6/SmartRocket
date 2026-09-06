@@ -58,7 +58,11 @@ frame, so 100x runs half a generation between frames), a course picker with
 the built-in courses and any file you open, and an Edit course toggle that
 swaps the simulation for the editor in the same window. The run pauses while
 you edit; switching back, or pressing Run in the editor, restarts on the
-course as drawn. The panel on the
+course as drawn. Parameters opens a side panel where population, lifespan,
+mutation rate, speed limit and elite share can be changed; Apply restarts
+with the new values. Help lists every control and shortcut. The window can be
+resized and the course scales to fit; its size, speed setting and whether the
+parameters are shown are remembered between runs. The panel on the
 right charts average and best fitness and the number of rockets on target or
 crashed for every generation of the current run.
 

@@ -27,6 +27,7 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
     private final GamePanel gamePanel;
     private final StatsPanel statsPanel = new StatsPanel();
     private final ControlBar controls;
+    private final ParameterPanel parameters;
     private final JPanel centre = new JPanel(new CardLayout());
     private CourseEditorPanel editor;
     private boolean editing;
@@ -46,6 +47,8 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
         this.courseName = courseName;
         this.courseFile = courseFile;
         this.onLayoutChanged = onLayoutChanged;
+        this.parameters = new ParameterPanel(arguments.config(), this::applyConfig);
+        this.parameters.setVisible(false);
         this.gamePanel = new GamePanel(newSimulation());
         List<String> names = new ArrayList<>();
         for (CourseLayout layout : CourseLayout.values()) {
@@ -54,8 +57,18 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
         this.controls = new ControlBar(this, names, courseName);
         centre.add(gamePanel, RUN_CARD);
         add(controls, BorderLayout.NORTH);
+        add(parameters, BorderLayout.WEST);
         add(centre, BorderLayout.CENTER);
         add(statsPanel, BorderLayout.EAST);
+    }
+
+    /** The configuration runs use: the command line's, as amended in the parameter panel. */
+    public SimulationConfig config() {
+        return parameters.current();
+    }
+
+    private void applyConfig(SimulationConfig config) {
+        restart();
     }
 
     /** Starts a fresh run on the current world: new log, cleared charts, same seed policy as the command line. */
@@ -67,9 +80,9 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
             LOG.log(Level.WARNING, "could not open " + arguments.logPath() + "; continuing without a log", e);
             log = null;
         }
-        statsPanel.reset(arguments.config().populationSize());
+        statsPanel.reset(config().populationSize());
         GenerationLog currentLog = log;
-        return new Simulation(arguments.config(), world, arguments.newRandom(), stats -> {
+        return new Simulation(config(), world, arguments.newRandom(), stats -> {
             if (currentLog != null) {
                 currentLog.accept(stats);
             }
@@ -184,11 +197,30 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
         startOn(edited, name, courseFile);
     }
 
+    @Override
+    public void setParametersVisible(boolean visible) {
+        parameters.setVisible(visible);
+        onLayoutChanged.run();
+    }
+
+    @Override
+    public void showHelp() {
+        JTextArea text = new JTextArea(HelpText.CONTROLS);
+        text.setEditable(false);
+        text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        JOptionPane.showMessageDialog(this, new JScrollPane(text), "Smart Rockets help", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    public boolean isParametersVisible() {
+        return parameters.isVisible();
+    }
+
     /** Switches to another world and restarts on it. */
     public void startOn(World newWorld, String name, Path file) {
         this.world = newWorld;
         this.courseName = name;
         this.courseFile = file;
+        parameters.setWorldSize(newWorld.width(), newWorld.height());
         controls.showCourse(name);
         gamePanel.setSimulation(newSimulation());
         onLayoutChanged.run();
@@ -212,5 +244,9 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
 
     CourseEditorPanel editor() {
         return editor;
+    }
+
+    ParameterPanel parameters() {
+        return parameters;
     }
 }
