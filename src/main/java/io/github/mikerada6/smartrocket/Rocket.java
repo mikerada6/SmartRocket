@@ -1,3 +1,5 @@
+package io.github.mikerada6.smartrocket;
+
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 

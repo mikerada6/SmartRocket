@@ -1,3 +1,5 @@
+package io.github.mikerada6.smartrocket;
+
 public class Vector {
 
     private double x;
@@ -79,7 +81,7 @@ public class Vector {
     public Vector normalize() {
         double mag = this.getMag();
         if (mag !=0)
-            return new Vector(this.x / mag, this.y / mag, this.z / z, is2D);
+            return new Vector(this.x / mag, this.y / mag, this.z / mag, is2D);
         else
             return new Vector(0,0,0,is2D);
     }

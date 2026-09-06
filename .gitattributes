@@ -1,0 +1,4 @@
+# Normalise line endings; the Windows wrapper script must keep CRLF to run under cmd.exe.
+* text=auto
+mvnw text eol=lf
+*.cmd text eol=crlf
