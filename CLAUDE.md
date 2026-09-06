@@ -14,8 +14,11 @@ checked-in wrapper, Swing for rendering, JUnit 5 for tests.
 
 ## Layout
 
-- `src/main/java/io/github/mikerada6/smartrocket/` application code, single package for now
-- `src/test/java/io/github/mikerada6/smartrocket/` unit tests, same package
+- `src/main/java/io/github/mikerada6/smartrocket/` application code, layered by package
+  (ADR 0007): `geometry` -> `world` -> `simulation` -> `report` -> `cli` -> `ui` (+ `ui.editor`),
+  entry point `SmartRockets` at the root. A lower package never imports a higher one, and
+  only `ui` and the root may import `java.awt` or `javax.swing`; `PackageDependencyTest` enforces it.
+- `src/test/java/io/github/mikerada6/smartrocket/` unit tests, same package as the class under test
 - `docs/adr/` architecture decision records, numbered `NNNN-title.md`
 - `courses/` example course files in the `CourseFile` text format; a test checks they match `CourseLayout`
 

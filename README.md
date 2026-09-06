@@ -107,11 +107,21 @@ drawn, and you can keep editing and run again.
 ## Layout
 
 ```
-src/main/java/io/github/mikerada6/smartrocket/   application code
-src/test/java/io/github/mikerada6/smartrocket/   unit tests
+src/main/java/io/github/mikerada6/smartrocket/
+  geometry/     vectors and numeric helpers
+  world/        world, barriers, target, courses and their files
+  simulation/   the genetic algorithm and per-generation statistics
+  report/       CSV log and chart history
+  cli/          command-line options
+  ui/           the Swing window, renderer, panels; ui/editor holds the course editor
+  SmartRockets  entry point
+src/test/java/...                                 unit tests, mirroring the packages
 docs/adr/                                         architecture decision records
 courses/                                          example course files
 ```
+
+Lower packages never import higher ones, and only `ui` touches Swing, so the
+simulation runs headless by construction (see ADR 0007).
 
 ## Contributing
 

@@ -1,5 +1,8 @@
 package io.github.mikerada6.smartrocket;
 
+import io.github.mikerada6.smartrocket.cli.Arguments;
+import io.github.mikerada6.smartrocket.simulation.GenerationStats;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
