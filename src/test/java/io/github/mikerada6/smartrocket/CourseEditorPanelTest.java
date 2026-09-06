@@ -16,6 +16,13 @@ class CourseEditorPanelTest {
     private static final World START = new World(400, 300, new Target(new Vec2(200, 40), 20),
             List.of(new Barrier(0, 150, 300, 20)));
 
+    /** An editor on the sample course with snapping off, so coordinates in tests are exact. */
+    private static CourseEditorPanel editor(java.util.function.Consumer<World> runner) {
+        CourseEditorPanel panel = new CourseEditorPanel(START, null, runner);
+        panel.model().setSnapToGrid(false);
+        return panel;
+    }
+
     private static void press(CourseEditorPanel panel, int x, int y) {
         dispatch(panel, MouseEvent.MOUSE_PRESSED, x, y);
     }
@@ -47,7 +54,7 @@ class CourseEditorPanelTest {
 
     @Test
     void draggingOnEmptySpaceDrawsABarrier() {
-        CourseEditorPanel panel = new CourseEditorPanel(START, null, w -> { });
+        CourseEditorPanel panel = editor(w -> { });
         press(panel, 20, 200);
         drag(panel, 60, 230);
         release(panel, 120, 260);
@@ -57,7 +64,7 @@ class CourseEditorPanelTest {
 
     @Test
     void draggingTheTargetMovesItAndDraggingABarrierMovesIt() {
-        CourseEditorPanel panel = new CourseEditorPanel(START, null, w -> { });
+        CourseEditorPanel panel = editor(w -> { });
         press(panel, 200, 40);
         drag(panel, 210, 50);
         release(panel, 230, 60);
@@ -70,9 +77,23 @@ class CourseEditorPanelTest {
     }
 
     @Test
+    void draggingAnEdgeResizesAndDraggingTheLaunchPointMovesIt() {
+        CourseEditorPanel panel = editor(w -> { });
+        press(panel, 300, 160);
+        drag(panel, 250, 160);
+        release(panel, 220, 160);
+        assertEquals(new Barrier(0, 150, 220, 20), panel.model().barriers().get(0));
+
+        Vec2 launch = panel.model().launch();
+        press(panel, (int) launch.x() + 2, (int) launch.y() + 10);
+        release(panel, (int) launch.x() + 52, (int) launch.y() - 90);
+        assertEquals(new Vec2(launch.x() + 50, launch.y() - 100), panel.model().launch());
+    }
+
+    @Test
     void runHandsTheCurrentCourseToTheRunner() {
         AtomicReference<World> ran = new AtomicReference<>();
-        CourseEditorPanel panel = new CourseEditorPanel(START, null, ran::set);
+        CourseEditorPanel panel = editor(ran::set);
         press(panel, 20, 200);
         release(panel, 120, 260);
         for (var button : findButtons(panel)) {
@@ -98,7 +119,7 @@ class CourseEditorPanelTest {
 
     @Test
     void clickingWithoutMovingNeitherDirtiesNorAddsAnUndoStep() {
-        CourseEditorPanel panel = new CourseEditorPanel(START, null, w -> { });
+        CourseEditorPanel panel = editor(w -> { });
         press(panel, 100, 160);
         release(panel, 100, 160);
         assertFalse(panel.model().isDirty());

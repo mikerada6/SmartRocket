@@ -40,6 +40,18 @@ class CourseFileTest {
         String text = CourseFile.format(SAMPLE);
         assertTrue(text.contains("target 200 40.5 12\n"), text);
         assertTrue(text.contains("size 400 300\n"), text);
+        assertTrue(text.contains("launch 200 275\n"), text);
+    }
+
+    @Test
+    void launchLineIsOptionalAndValidated() {
+        World custom = CourseFile.parse("size 400 300\ntarget 200 40 12\nlaunch 20 30\n");
+        assertEquals(new Vec2(20, 30), custom.launch());
+        World defaulted = CourseFile.parse("size 400 300\ntarget 200 40 12\n");
+        assertEquals(World.defaultLaunch(400, 300), defaulted.launch());
+        assertMessage("launch point", () -> CourseFile.parse("size 400 300\ntarget 200 40 12\nlaunch 500 30\n"));
+        assertMessage("line 3", () -> CourseFile.parse("size 400 300\ntarget 200 40 12\nlaunch 1\n"));
+        assertMessage("line 4", () -> CourseFile.parse("size 400 300\ntarget 200 40 12\nlaunch 1 1\nlaunch 2 2\n"));
     }
 
     @Test

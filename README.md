@@ -75,6 +75,7 @@ appear once, `barrier` any number of times:
 ```
 size 1024 768          # world width and height in pixels
 target 512 50 25       # centre x, centre y, radius
+launch 512 743         # optional: where rockets start (bottom centre if absent)
 barrier 0 512 896 25   # left, top, width, height
 ```
 
@@ -92,10 +93,12 @@ editor, on the built-in course or on the given file if it exists:
 ./mvnw -q exec:java -Dexec.args="--edit --course-file courses/mine.course"
 ```
 
-Drag on empty space to draw a barrier, drag a barrier or the target to move
-it, click a barrier and press Delete to remove it, and scroll over the target
-to resize it. Save writes the file; Run opens a simulation window on the
-course as drawn, and you can keep editing and run again.
+Drag on empty space to draw a barrier; drag a barrier to move it or drag one
+of its edges or corners to resize it; drag the target or the launch marker to
+move them; click a barrier and press Delete to remove it; scroll over the
+target to resize it. Snap to grid is on by default and can be toggled in the
+toolbar. Save writes the file; Run restarts the simulation on the course as
+drawn, and you can keep editing and run again.
 
 ## Layout
 

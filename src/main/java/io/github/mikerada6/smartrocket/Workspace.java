@@ -133,20 +133,12 @@ public final class Workspace extends JPanel implements ControlBar.Listener {
 
     @Override
     public void openCourseFile() {
-        JFileChooser chooser = new JFileChooser(Path.of("courses").toAbsolutePath().toFile());
-        chooser.setDialogTitle("Open course");
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
-            controls.showCourse(courseName);
-            return;
-        }
-        Path file = chooser.getSelectedFile().toPath();
-        try {
-            startOn(CourseFile.read(file), file.getFileName().toString(), file);
-        } catch (IOException | IllegalArgumentException e) {
-            LOG.log(Level.WARNING, "could not open course " + file, e);
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Cannot open course", JOptionPane.ERROR_MESSAGE);
-            controls.showCourse(courseName);
-        }
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        CourseLibraryDialog dialog = new CourseLibraryDialog(owner, Path.of("courses"),
+                (file, world) -> startOn(world, file.getFileName().toString(), file));
+        dialog.setVisible(true);
+        // Cancelled, or chose the course already showing: put the picker back to what is running.
+        controls.showCourse(courseName);
     }
 
     /**

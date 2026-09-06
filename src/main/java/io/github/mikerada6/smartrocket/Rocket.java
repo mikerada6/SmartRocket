@@ -38,7 +38,7 @@ public final class Rocket {
         this.dna = dna;
         this.world = world;
         this.maxSpeed = maxSpeed;
-        pos = new Vec2(world.width() / 2.0, world.height() - HEIGHT);
+        pos = world.launch();
     }
 
     /**
