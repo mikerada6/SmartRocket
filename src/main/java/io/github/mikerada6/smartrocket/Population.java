@@ -1,6 +1,5 @@
 package io.github.mikerada6.smartrocket;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Random;
 
@@ -114,12 +113,5 @@ public class Population {
 
     public int getLifespan() {
         return lifespan;
-    }
-
-    public Graphics draw(Graphics g) {
-        for (Rocket r : rockets) {
-            r.draw(g);
-        }
-        return g;
     }
 }

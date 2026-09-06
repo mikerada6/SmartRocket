@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SimulationTest {
 
     private static final SimulationConfig SMALL = new SimulationConfig(400, 400, 50, 20);
-    private static final World OPEN_WORLD = new World(400, 400, new Target(new Vector(200, 50), 25), List.of());
+    private static final World OPEN_WORLD = new World(400, 400, new Target(new Vec2(200, 50), 25), List.of());
 
     private static Simulation seeded(long seed, SimulationConfig config) {
         return new Simulation(config, OPEN_WORLD, new Random(seed));
@@ -53,8 +53,7 @@ class SimulationTest {
         List<Rocket> ra = a.population().getRockets();
         List<Rocket> rb = b.population().getRockets();
         for (int i = 0; i < ra.size(); i++) {
-            assertEquals(ra.get(i).getXPos(), rb.get(i).getXPos(), 0);
-            assertEquals(ra.get(i).getYPos(), rb.get(i).getYPos(), 0);
+            assertEquals(ra.get(i).position(), rb.get(i).position());
         }
     }
 

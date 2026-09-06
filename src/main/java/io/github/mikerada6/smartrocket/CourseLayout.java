@@ -37,6 +37,6 @@ public enum CourseLayout {
     public abstract World create(int width, int height);
 
     private static Target target(int width) {
-        return new Target(new Vector(width / 2, 50), 25);
+        return new Target(new Vec2(width / 2, 50), 25);
     }
 }

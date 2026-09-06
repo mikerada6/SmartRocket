@@ -13,7 +13,7 @@ public record World(int width, int height, Target target, List<Barrier> barriers
     }
 
     /** True when the point lies outside the playable area. */
-    public boolean isOutOfBounds(Vector pos) {
-        return pos.getX() > width || pos.getX() < 0 || pos.getY() > height || pos.getY() < 0;
+    public boolean isOutOfBounds(Vec2 pos) {
+        return pos.x() > width || pos.x() < 0 || pos.y() > height || pos.y() < 0;
     }
 }

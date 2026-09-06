@@ -2,10 +2,12 @@ package io.github.mikerada6.smartrocket;
 
 import org.junit.jupiter.api.Test;
 
+import java.awt.Color;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DNATest {
 
@@ -14,8 +16,21 @@ class DNATest {
         DNA dna = new DNA(50, new Random(1));
         assertEquals(50, dna.length());
         for (int i = 0; i < dna.length(); i++) {
-            assertEquals(Rocket.MAX_THRUST, dna.getGene(i).getMag(), 1e-9);
+            assertEquals(Rocket.MAX_THRUST, dna.getGene(i).mag(), 1e-9);
         }
+    }
+
+    @Test
+    void geneDirectionsCoverAllQuadrants() {
+        // Directions are sampled by angle; the original sampled a square of random ints,
+        // which biased thrust toward the diagonals.
+        DNA dna = new DNA(400, new Random(4));
+        boolean[] quadrant = new boolean[4];
+        for (int i = 0; i < dna.length(); i++) {
+            Vec2 g = dna.getGene(i);
+            quadrant[(g.x() >= 0 ? 0 : 1) + (g.y() >= 0 ? 0 : 2)] = true;
+        }
+        assertTrue(quadrant[0] && quadrant[1] && quadrant[2] && quadrant[3]);
     }
 
     @Test
@@ -23,8 +38,7 @@ class DNATest {
         DNA a = new DNA(30, new Random(7));
         DNA b = new DNA(30, new Random(7));
         for (int i = 0; i < a.length(); i++) {
-            assertEquals(a.getGene(i).getX(), b.getGene(i).getX(), 1e-12);
-            assertEquals(a.getGene(i).getY(), b.getGene(i).getY(), 1e-12);
+            assertEquals(a.getGene(i), b.getGene(i));
         }
         assertEquals(a.getColor(), b.getColor());
     }
@@ -54,5 +68,15 @@ class DNATest {
                 assertEquals(-1, switched, "partner genes must not appear after self genes start");
             }
         }
+    }
+
+    @Test
+    void crossoverBlendsColoursWithoutDarkening() {
+        DNA red = new DNA(new Vec2[5], Color.RED, new Random(1));
+        DNA blue = new DNA(new Vec2[5], Color.BLUE, new Random(1));
+        Color child = red.crossover(blue).getColor();
+        assertEquals(180, child.getRed());
+        assertEquals(0, child.getGreen());
+        assertEquals(180, child.getBlue());
     }
 }
