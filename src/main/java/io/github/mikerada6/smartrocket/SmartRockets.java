@@ -14,7 +14,7 @@ public class SmartRockets {
 
     public static void main(String[] args) throws IOException {
         SimulationConfig config = SimulationConfig.defaults();
-        World world = World.defaultLayout(config.width(), config.height());
+        World world = CourseLayout.EASY.create(config.width(), config.height());
         GenerationLog log = new GenerationLog(GENERATION_LOG);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
