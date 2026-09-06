@@ -62,6 +62,7 @@ public class Population {
             Arrays.sort(ranked, Comparator.comparingDouble(Rocket::fitness).reversed());
             for (int i = 0; i < elites; i++) {
                 newRockets[i] = new Rocket(ranked[i].getDna(), world, config.maxSpeed());
+                newRockets[i].markElite();
             }
         }
         for (int i = elites; i < size; i++) {

@@ -43,6 +43,8 @@ class PopulationTest {
         assertEquals(40, next.size());
         Set<DNA> carried = next.subList(0, 3).stream().map(Rocket::getDna).collect(Collectors.toSet());
         assertEquals(bestThree, carried, "the first slots must hold exactly the best genomes");
+        assertEquals(3, next.stream().filter(Rocket::isElite).count());
+        assertTrue(next.subList(0, 3).stream().allMatch(Rocket::isElite));
         for (Rocket r : next) {
             assertEquals(Vec2.ZERO, r.velocity(), "every rocket in the new generation starts from rest");
         }
