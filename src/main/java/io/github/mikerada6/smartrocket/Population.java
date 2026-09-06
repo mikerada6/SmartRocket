@@ -2,85 +2,107 @@ package io.github.mikerada6.smartrocket;
 
 import java.awt.*;
 import java.util.ArrayList;
-
-import static java.util.Arrays.sort;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 public class Population {
-    Rocket[] rockets;
-    int popsize;
-    ArrayList<Rocket> matingpool;
 
-    public Population() {
-        popsize = 10000;
-        rockets = new Rocket[popsize];
-        matingpool = new ArrayList<Rocket>();
+    private final int size;
+    private final int lifespan;
+    private final World world;
+    private final Random random;
+    private Rocket[] rockets;
+    private List<Rocket> matingPool;
 
-        for (int i = 0; i < popsize; i++) {
-            rockets[i] = new Rocket();
+    public Population(int size, int lifespan, World world, Random random) {
+        this.size = size;
+        this.lifespan = lifespan;
+        this.world = world;
+        this.random = random;
+        rockets = new Rocket[size];
+        matingPool = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            rockets[i] = new Rocket(new DNA(lifespan, random), world);
         }
     }
 
-    public double evaluate()
-    {
-        double avgFit=0;
-        double maxFit=0;
-        sort(rockets);
-        for(Rocket r: rockets){
+    /**
+     * Scores every rocket and rebuilds the mating pool in proportion to fitness.
+     *
+     * @return the population's average fitness
+     */
+    public double evaluate() {
+        double avgFit = 0;
+        double maxFit = 0;
+        Arrays.sort(rockets);
+        for (Rocket r : rockets) {
             double fit = r.calcFitness();
-            if(maxFit<fit)
-            {
-                maxFit=fit;
+            if (maxFit < fit) {
+                maxFit = fit;
             }
-            avgFit+=fit;
+            avgFit += fit;
         }
         avgFit /= rockets.length;
-        for(Rocket r: rockets)
-        {
-            r.setMatingEligibility(r.calcFitness()/maxFit);
+        for (Rocket r : rockets) {
+            r.setMatingEligibility(r.calcFitness() / maxFit);
         }
 
-        matingpool = new ArrayList<Rocket>();
-
+        matingPool = new ArrayList<>();
         for (Rocket r : rockets) {
-            double n = r.getMatingEligibility()* 100;
+            double n = r.getMatingEligibility() * 100;
             for (int j = 0; j < n; j++) {
-                matingpool.add(r);
+                matingPool.add(r);
             }
         }
-
         return avgFit;
     }
 
+    /** Replaces every rocket with a mutated child of two parents drawn from the mating pool. */
     public void selection() {
-        Rocket[] newRockets = new Rocket[popsize];
+        Rocket[] newRockets = new Rocket[size];
         for (int i = 0; i < rockets.length; i++) {
-            DNA parentA = random(matingpool).getDna();
-            DNA parentB = random(matingpool).getDna();
+            DNA parentA = random(matingPool).getDna();
+            DNA parentB = random(matingPool).getDna();
             DNA child = parentA.crossover(parentB);
             child.mutation();
-            newRockets[i] = new Rocket(child);
+            newRockets[i] = new Rocket(child, world);
         }
-
         this.rockets = newRockets;
     }
 
-    private Rocket random(ArrayList<Rocket> list) {
-        int r = (int) (Math.random() * (list.size()));
-        return list.get(r);
+    private Rocket random(List<Rocket> list) {
+        return list.get(random.nextInt(list.size()));
     }
 
-    public void checkBarriers(Barrier[] b)
-    {
+    public void checkBarriers() {
         for (Rocket r : rockets) {
-            r.checkBarriers(b);
+            r.checkBarriers();
         }
     }
 
-    public void update() {
+    /**
+     * Advances every rocket one frame.
+     *
+     * @return how many rockets are on the target after this frame
+     */
+    public int update(int age) {
+        int hits = 0;
         for (Rocket r : rockets) {
-            r.update();
+            if (r.update(age)) {
+                hits++;
+            }
         }
         this.evaluate();
+        return hits;
+    }
+
+    public List<Rocket> getRockets() {
+        return List.of(rockets);
+    }
+
+    public int getLifespan() {
+        return lifespan;
     }
 
     public Graphics draw(Graphics g) {
@@ -90,4 +112,3 @@ public class Population {
         return g;
     }
 }
-

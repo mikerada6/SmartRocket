@@ -2,66 +2,43 @@ package io.github.mikerada6.smartrocket;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
-/**
- * Write a description of class GamePanel here.
- *
- * @author (your name)
- * @version (a version number or a date)
- */
+/** Swing view of a {@link Simulation}: steps it on a background thread and paints each frame. */
 public class GamePanel extends JPanel implements Runnable {
 
     public static final int FPS = 60;
-    public static final int WIDTH = 1024;
-    public static final int HEIGHT = 768;
-    public static int totalFrameCount;
-    public boolean running;
+
+    private final Simulation simulation;
+    private final int width;
+    private final int height;
     private BufferedImage image;
     private Graphics2D g;
     private double averageFPS;
     private Thread thread;
-    private Population p;
-    public static final Target t= new Target();
-    public static int age;
-    public static int generation;
-    public static double stat;
-    public static double hit;
-    public static Barrier[] barriers;
+    private volatile boolean running;
 
-    public GamePanel() {
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+    public GamePanel(Simulation simulation) {
+        this.simulation = simulation;
+        this.width = simulation.world().width();
+        this.height = simulation.world().height();
+        setPreferredSize(new Dimension(width, height));
         setFocusable(true);
         requestFocus();
-        BufferedImage img = null;
-        totalFrameCount = 0;
-        p = new Population();
-        generation=0;
-        age=0;
-        barriers = new Barrier[3];
-        //barriers[0] = new Barrier((WIDTH - WIDTH/2) / 2,(HEIGHT - 50) / 2, WIDTH/2,50);
-        //barriers[1] = new Barrier((WIDTH - 50) / 2,150, WIDTH/2,25);
-
-        barriers[0] = new Barrier(0, 2 * HEIGHT / 3, 7 * WIDTH / 8, 25);
-        barriers[1] = new Barrier(WIDTH-3*WIDTH/4 ,1 * HEIGHT/3, 3*WIDTH/4,25);
-        barriers[2] = new Barrier(0, 1 * HEIGHT / 8, 1 * WIDTH / 4, 25);
         try {
             String str = "generation \ttotalFrameCount\t hit\n";
             BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt"));
             writer.write(str);
-
             writer.close();
-        }catch (Exception e)
-        {
+        } catch (Exception e) {
             System.out.println("Error: " + e);
-            int error=0/0;
+            int error = 0 / 0;
         }
-
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
         if (thread == null) {
@@ -70,11 +47,9 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
+    @Override
     public void run() {
         running = true;
-
-        image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-        g = (Graphics2D) image.getGraphics();
 
         long startTime;
         long URDTimeMillis;
@@ -86,18 +61,13 @@ public class GamePanel extends JPanel implements Runnable {
 
         long targetTime = 1000 / FPS;
 
-
-
         while (running) {
-            hit=0;
-
             startTime = System.nanoTime();
-            image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+            image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
             g = (Graphics2D) image.getGraphics();
             gameUpdate();
             gameRender();
             gameDraw();
-            totalFrameCount++;
 
             URDTimeMillis = (System.nanoTime() - startTime) / 1000000;
             waitTime = targetTime - URDTimeMillis;
@@ -118,79 +88,46 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void gameUpdate() {
-        p.update();
-        String str = generation +"\t" + totalFrameCount%DNA.lifespan +"\t" + hit+"\n";
-        try{
+        int generation = simulation.generation();
+        int age = simulation.age();
+        simulation.step();
+        String str = generation + "\t" + age + "\t" + simulation.hitsThisFrame() + "\n";
+        try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt", true));
             writer.append(' ');
             writer.append(str);
-
             writer.close();
-        }catch(Exception e)
-        {
+        } catch (Exception e) {
             System.out.println("Error: " + e);
-            int error=0/0;
-        }
-        p.checkBarriers(barriers);
-        age++;
-        if (age >= DNA.lifespan) {
-            stat = p.evaluate();
-            p.selection();
-            age = 0;
-            generation++;
+            int error = 0 / 0;
         }
     }
 
     public void gameRender() {
-        //draw the FPS onto the screen
         g.setColor(Color.RED);
-        for(Barrier b: barriers)
-        {
+        for (Barrier b : simulation.world().barriers()) {
             b.draw(g);
         }
         g.setColor(Color.WHITE);
-        p.draw(g);
-        t.draw(g);
+        simulation.population().draw(g);
+        simulation.world().target().draw(g);
         g.setColor(Color.WHITE);
-        g.drawString("Generation: " + generation, 20, 20);
-        g.drawString("Age: " + age, 20, 40);
+        g.drawString("Generation: " + simulation.generation(), 20, 20);
+        g.drawString("Age: " + simulation.age(), 20, 40);
+        double stat = simulation.lastAverageFitness();
         if (stat != 0) {
             g.drawString("Stat: " + stat, 20, 60);
             g.drawString("FPS: " + averageFPS, 20, 80);
-            g.drawString("Hit: " + hit, 20, 100);
-        }
-        else
-        {
+            g.drawString("Hit: " + simulation.hitsThisFrame(), 20, 100);
+        } else {
             g.drawString("FPS: " + averageFPS, 20, 60);
-            g.drawString("Hit: " + hit, 20, 80);
+            g.drawString("Hit: " + simulation.hitsThisFrame(), 20, 80);
         }
-
-
     }
 
     public void gameDraw() {
         Graphics g2 = this.getGraphics();
         g2.drawImage(image, 0, 0, null);
         g2.dispose();
-
     }
-
-    public void keyTyped(KeyEvent key) {
-
-    }
-
-
-    public void keyReleased(KeyEvent key) {
-    }
-
-    /**
-     * Linearly maps {@code num} from the input range to the output range, extrapolating
-     * outside the input range. The output range may be reversed (min greater than max).
-     */
-    public static double map(double num, double minInput, double maxInput, double minOutput, double maxOutput)
-    {
-        double slope = (maxOutput - minOutput) / (maxInput - minInput);
-        return minOutput + slope * (num - minInput);
-    }
-
 }

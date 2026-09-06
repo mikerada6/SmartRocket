@@ -4,12 +4,12 @@ import java.awt.*;
 
 public class Target {
 
-    private Vector pos;
-    private int size;
+    private final Vector pos;
+    private final int size;
 
-    Target() {
-        pos = new Vector(GamePanel.WIDTH / 2, 50);
-        size = 25;
+    public Target(Vector pos, int size) {
+        this.pos = pos;
+        this.size = size;
     }
 
     public Graphics draw(Graphics g) {
