@@ -1,0 +1,128 @@
+package io.github.mikerada6.smartrocket.simulation;
+
+import io.github.mikerada6.smartrocket.geometry.Vec2;
+import io.github.mikerada6.smartrocket.world.Barrier;
+import io.github.mikerada6.smartrocket.world.Target;
+import io.github.mikerada6.smartrocket.world.World;
+
+import org.junit.jupiter.api.Test;
+
+import java.awt.Color;
+import java.util.List;
+import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class RocketTest {
+
+    private static final int LIFESPAN = 40;
+    private static final World OPEN_WORLD = new World(400, 400, new Target(new Vec2(200, 50), 25), List.of());
+
+    /** A genome whose every gene is the same thrust vector, so the flight path is predictable. */
+    private static DNA constantDna(Vec2 thrust) {
+        Vec2[] genes = new Vec2[LIFESPAN];
+        for (int i = 0; i < genes.length; i++) {
+            genes[i] = thrust;
+        }
+        return new DNA(genes, SimulationConfig.DEFAULT_MUTATION_RATE, new Random(0));
+    }
+
+    private static Rocket fly(Rocket rocket) {
+        for (int age = 0; age < LIFESPAN; age++) {
+            rocket.update(age);
+            rocket.checkBarriers();
+        }
+        return rocket;
+    }
+
+    private static final Vec2 UP = new Vec2(0, -Rocket.MAX_THRUST);
+    private static final Vec2 RIGHT = new Vec2(Rocket.MAX_THRUST, 0);
+
+    @Test
+    void thrustingStraightUpReachesTheTargetAndStopsThere() {
+        Rocket rocket = fly(new Rocket(constantDna(UP), OPEN_WORLD));
+        assertTrue(rocket.hasHitTarget());
+        assertFalse(rocket.hasCrashed());
+        assertEquals(OPEN_WORLD.target().centre(), rocket.position());
+    }
+
+    @Test
+    void leavingTheWorldCrashesAndFreezesTheRocket() {
+        Rocket rocket = fly(new Rocket(constantDna(RIGHT), OPEN_WORLD));
+        assertTrue(rocket.hasCrashed());
+        Vec2 frozen = rocket.position();
+        rocket.update(0);
+        assertEquals(frozen, rocket.position());
+    }
+
+    @Test
+    void touchingABarrierCrashesTheRocket() {
+        World walled = new World(400, 400, OPEN_WORLD.target(), List.of(new Barrier(0, 150, 400, 100)));
+        Rocket rocket = fly(new Rocket(constantDna(UP), walled));
+        assertTrue(rocket.hasCrashed());
+        assertFalse(rocket.hasHitTarget());
+    }
+
+    @Test
+    void reachingTheTargetOutscoresMissingIt() {
+        // Regression for the map() bug: a hit used to be worth roughly -20000, so this
+        // comparison came out the other way and winners were bred out of the population.
+        Rocket hit = fly(new Rocket(constantDna(UP), OPEN_WORLD));
+        Rocket stayedHome = fly(new Rocket(constantDna(Vec2.ZERO), OPEN_WORLD));
+        Rocket crashed = fly(new Rocket(constantDna(RIGHT), OPEN_WORLD));
+
+        assertTrue(hit.calcFitness() > 0);
+        assertTrue(hit.calcFitness() > stayedHome.calcFitness());
+        assertTrue(stayedHome.calcFitness() > crashed.calcFitness());
+    }
+
+    @Test
+    void earlierArrivalScoresHigherThanLaterArrival() {
+        Rocket fast = fly(new Rocket(constantDna(UP), OPEN_WORLD));
+        Rocket slow = fly(new Rocket(constantDna(UP.multiply(0.25)), OPEN_WORLD));
+        assertTrue(fast.hasHitTarget());
+        assertTrue(slow.hasHitTarget());
+        assertTrue(fast.calcFitness() > slow.calcFitness());
+    }
+
+    @Test
+    void headingFollowsVelocityAndPointsUpWhenStill() {
+        Rocket rocket = new Rocket(constantDna(RIGHT), OPEN_WORLD);
+        assertEquals(-Math.PI / 2, rocket.heading(), 1e-9);
+        rocket.update(0);
+        assertEquals(0, rocket.heading(), 1e-9);
+    }
+
+    @Test
+    void speedNeverExceedsTheConfiguredLimit() {
+        Rocket rocket = new Rocket(constantDna(UP), OPEN_WORLD, 6);
+        for (int age = 0; age < LIFESPAN; age++) {
+            rocket.update(age);
+            assertTrue(rocket.velocity().mag() <= 6 + 1e-9, "speed " + rocket.velocity().mag() + " at age " + age);
+        }
+        Rocket unlimited = new Rocket(constantDna(UP), OPEN_WORLD);
+        unlimited.update(0);
+        unlimited.update(1);
+        unlimited.update(2);
+        assertTrue(unlimited.velocity().mag() > 6);
+    }
+
+    @Test
+    void onlyElitesKeepATrailAndItIsBounded() {
+        Rocket plain = new Rocket(constantDna(UP), OPEN_WORLD);
+        plain.update(0);
+        assertTrue(plain.trail().isEmpty());
+        assertFalse(plain.isElite());
+
+        Rocket elite = new Rocket(constantDna(new Vec2(0, -0.5)), OPEN_WORLD, 2);
+        elite.markElite();
+        for (int age = 0; age < Rocket.TRAIL_LENGTH + 10; age++) {
+            elite.update(age);
+        }
+        assertTrue(elite.isElite());
+        assertEquals(Rocket.TRAIL_LENGTH, elite.trail().size());
+        assertEquals(elite.position(), elite.trail().get(Rocket.TRAIL_LENGTH - 1), "newest position is last");
+    }
+}
