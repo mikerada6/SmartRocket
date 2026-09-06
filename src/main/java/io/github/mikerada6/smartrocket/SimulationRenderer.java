@@ -14,25 +14,34 @@ public final class SimulationRenderer {
 
     public void render(Graphics2D g, Simulation simulation, double fps) {
         World world = simulation.world();
+        drawBackgroundAndBarriers(g, world);
+        for (Rocket rocket : simulation.population().getRockets()) {
+            drawRocket(g, rocket);
+        }
+        drawTarget(g, world.target());
+        drawHud(g, simulation, fps);
+    }
+
+    /** Everything static in a world, without rockets; shared with the course editor. */
+    public void drawWorld(Graphics2D g, World world) {
+        drawBackgroundAndBarriers(g, world);
+        drawTarget(g, world.target());
+    }
+
+    private static void drawBackgroundAndBarriers(Graphics2D g, World world) {
         g.setColor(BACKGROUND);
         g.fillRect(0, 0, world.width(), world.height());
-
         g.setColor(BARRIER);
         for (Barrier b : world.barriers()) {
             g.fillRect(b.x(), b.y(), b.width(), b.height());
         }
+    }
 
-        for (Rocket rocket : simulation.population().getRockets()) {
-            drawRocket(g, rocket);
-        }
-
-        Target target = world.target();
+    private static void drawTarget(Graphics2D g, Target target) {
         int diameter = (int) Math.round(2 * target.radius());
         g.setColor(TARGET);
         g.fillOval((int) Math.round(target.centre().x() - target.radius()),
                 (int) Math.round(target.centre().y() - target.radius()), diameter, diameter);
-
-        drawHud(g, simulation, fps);
     }
 
     private static void drawRocket(Graphics2D g, Rocket rocket) {

@@ -1,0 +1,5 @@
+# SmartRocket course: size W H; target X Y RADIUS; barrier LEFT TOP WIDTH HEIGHT
+# The built-in EASY course at 1024x768: one barrier with a gap on the right.
+size 1024 768
+target 512 50 25
+barrier 0 384 768 25
