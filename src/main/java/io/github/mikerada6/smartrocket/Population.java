@@ -6,21 +6,21 @@ import java.util.Random;
 public class Population {
 
     private final int size;
-    private final int lifespan;
+    private final SimulationConfig config;
     private final World world;
     private final Random random;
     private Rocket[] rockets;
     private WeightedPicker parentPicker;
     private double maxFitness;
 
-    public Population(int size, int lifespan, World world, Random random) {
-        this.size = size;
-        this.lifespan = lifespan;
+    public Population(SimulationConfig config, World world, Random random) {
+        this.size = config.populationSize();
+        this.config = config;
         this.world = world;
         this.random = random;
         rockets = new Rocket[size];
         for (int i = 0; i < size; i++) {
-            rockets[i] = new Rocket(new DNA(lifespan, random), world);
+            rockets[i] = new Rocket(new DNA(config.lifespan(), config.mutationRate(), random), world);
         }
     }
 
@@ -112,6 +112,6 @@ public class Population {
     }
 
     public int getLifespan() {
-        return lifespan;
+        return config.lifespan();
     }
 }

@@ -21,7 +21,7 @@ class RocketTest {
         for (int i = 0; i < genes.length; i++) {
             genes[i] = thrust;
         }
-        return new DNA(genes, Color.WHITE, new Random(0));
+        return new DNA(genes, Color.WHITE, SimulationConfig.DEFAULT_MUTATION_RATE, new Random(0));
     }
 
     private static Rocket fly(Rocket rocket) {
