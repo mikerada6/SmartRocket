@@ -1,5 +1,7 @@
 # SmartRocket
 
+[![CI](https://github.com/mikerada6/SmartRocket/actions/workflows/ci.yml/badge.svg)](https://github.com/mikerada6/SmartRocket/actions/workflows/ci.yml)
+
 A small genetic-algorithm demo: a population of rockets, each driven by a fixed
 sequence of thrust vectors (its DNA), tries to reach a target while avoiding
 barriers. After each generation the fittest rockets are bred and mutated, and
