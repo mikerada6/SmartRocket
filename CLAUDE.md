@@ -24,4 +24,4 @@ checked-in wrapper, Swing for rendering, JUnit 5 for tests.
   for Swing belongs in the rendering classes only.
 - The compiler runs with `-Xlint:all`. Do not add warnings.
 - Conventional Commits and GitFlow as in the global standards. PRs target `develop`.
-- `log.txt` is runtime output and is ignored, never committed.
+- `generations.csv` (and the old `log.txt`) are runtime output, ignored and never committed.

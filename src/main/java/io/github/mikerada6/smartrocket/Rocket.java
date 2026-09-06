@@ -3,7 +3,7 @@ package io.github.mikerada6.smartrocket;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 
-public class Rocket implements Comparable<Rocket> {
+public class Rocket {
 
     /** Magnitude of every gene's thrust vector. */
     public static final double MAX_THRUST = 4;
@@ -17,7 +17,7 @@ public class Rocket implements Comparable<Rocket> {
     private Vector acc;
     private boolean hitTarget;
     private boolean crashed;
-    private double matingEligibility;
+    private double fitness;
     private int stopTime;
 
     public Rocket(DNA dna, World world) {
@@ -28,7 +28,6 @@ public class Rocket implements Comparable<Rocket> {
         acc = new Vector(0, 0);
         hitTarget = false;
         crashed = false;
-        matingEligibility = 0;
         stopTime = -1;
     }
 
@@ -65,6 +64,17 @@ public class Rocket implements Comparable<Rocket> {
 
     public double distanceToTarget() {
         return pos.dist(world.target().getPos());
+    }
+
+    /** Computes fitness for the current state, caches it, and returns it. */
+    public double evaluateFitness() {
+        fitness = calcFitness();
+        return fitness;
+    }
+
+    /** Fitness as of the last {@link #evaluateFitness()} call, 0 before the first. */
+    public double fitness() {
+        return fitness;
     }
 
     public double calcFitness() {
@@ -112,14 +122,6 @@ public class Rocket implements Comparable<Rocket> {
         return crashed;
     }
 
-    public double getMatingEligibility() {
-        return matingEligibility;
-    }
-
-    public void setMatingEligibility(double matingEligibility) {
-        this.matingEligibility = matingEligibility;
-    }
-
     public DNA getDna() {
         return dna;
     }
@@ -135,10 +137,5 @@ public class Rocket implements Comparable<Rocket> {
             }
         }
         return false;
-    }
-
-    @Override
-    public int compareTo(Rocket o) {
-        return Double.compare(this.calcFitness(), o.calcFitness());
     }
 }

@@ -3,6 +3,7 @@ target/
 
 # Simulation output written at runtime
 log.txt
+generations.csv
 
 # IDE and OS files
 .idea/
